@@ -1,0 +1,4 @@
+registry,format,files,n_observations,n_columns,n_unique_stations,n_unique_brands,n_unique_postcodes,n_unique_fuel_types,earliest_observation,latest_observation
+NSW FuelCheck,monthly XLSX,93,4401971,8,4813,62,565,11,2016-12-01,2026-01-31
+QLD Fuel Price Reporting Scheme,monthly CSV,85,4970650,13,1883,37,375,10,2018-12-02,2025-12-31
+WA FuelWatch,monthly CSV,100,8047153,11,1423,47,200,7,2018-01-01,2026-04-29

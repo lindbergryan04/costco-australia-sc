@@ -1,0 +1,4 @@
+registry,earliest_observation,latest_observation,official_start_date,notes
+NSW FuelCheck,2016-12-01,2026-01-31,2016-08-01,Mandatory station reporting since Aug 2016.
+QLD Fuel Price Reporting Scheme,2018-12-02,2025-12-31,2018-12-01,Mandatory reporting since Dec 2018.
+WA FuelWatch,2018-01-01,2026-04-29,2001-01-01,Daily mandatory reporting since Jan 2001; we pulled 2018 onward.

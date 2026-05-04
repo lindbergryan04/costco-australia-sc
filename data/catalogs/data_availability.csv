@@ -1,0 +1,7 @@
+state,registry,operator,registry_start,access_type,api_url,bulk_download_url,format,n_costcos_usable,notes
+NSW,FuelCheck,NSW Govt,2016-08-01,API + bulk,https://api.nsw.gov.au/Product/Index/22,https://data.nsw.gov.au/data/dataset/fuel-check,API JSON / monthly XLSX,2,2500+ stations; bulk download is monthly Excel files
+WA,FuelWatch,WA Govt,2001-01-01,bulk + RSS,https://www.fuelwatch.wa.gov.au/tools/rss,https://catalogue.data.wa.gov.au/dataset/fuelwatch-historic-fuel-prices,CSV,2,longest history in Australia (since 2001)
+QLD,Fuel Price Reporting,QLD Treasury,2018-12-01,API + CSV,https://www.fuelpricesqld.com.au,https://www.data.qld.gov.au/dataset/fuel-price-reporting,CSV,1,requires registration for token-based API; bulk CSV is ungated
+VIC,FuelPrice (voluntary),VIC Govt,unknown,partial,unknown,unknown,unknown,0,voluntary reporting; coverage incomplete; not used
+SA,Fuel Price Transparency,SA Govt + Informed Sources,2021-03-18,via Informed Sources,unknown,unknown,unknown,0,too recent for any existing Costco
+ACT,none,n/a,n/a,n/a,n/a,n/a,n/a,0,no real-time mandatory scheme; 2019 inquiry recommended one but not implemented

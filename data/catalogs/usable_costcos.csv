@@ -1,0 +1,11 @@
+state,name,address,suburb,postcode,lat,lng,first_date,months_pre,months_post,tier,notes
+QLD,Costco Fuel Gold Coast,47 Creek Road,Coomera,4209,-27.850829,153.314369,2023-05-23,53,35,strong,opened May 2023; clean pre and post
+WA,Costco Casuarina,137 Market St,CASUARINA,6167,,,2022-11-11,58,41,strong,opening matches news (Nov 2022)
+NSW,Costco Lake Macquarie,"1 CRESSY RD, BOOLAROO NSW 2284",BOOLAROO,2284,,,2022-05-02,69,47,strong,first seen May 2022; verify physical opening date
+WA,Costco Perth Airport,142 Dunreath Dr,PERTH AIRPORT,6105,,,2020-04-11,27,72,strong,opening Feb 2020 per news; first FuelWatch record Apr 2020
+NSW,Costco Marsden Park,"10 Langford Drive, MARSDEN PARK NSW 2765",MARSDEN PARK,2765,,,2017-07-19,11,105,marginal,11 mo pre is tight; opened Aug 2017 per news
+NSW,Costco Canberra Airport,"39-41 Mustang Avenue, Canberra Airport ACT 2609",Canberra Airport,2609,,,2023-11-02,87,29,marginal,fuel station opened Nov 2023; warehouse predates data
+NSW,Costco Auburn,"COSTCO 17-21 PARRAMATTA RD, LIDCOMBE NSW 2141",LIDCOMBE,2141,,,2025-08-08,108,8,marginal,opened Aug 2025; only 8 months post-data
+NSW,Costco Casula,"20 Parkersfarm Place, Casula NSW 2170",Casula,2170,,,2016-12-05,4,113,unusable,opened 2010; only 4 months pre in data
+QLD,Costco Northlakes,17 to 39 Cook Court,North Lakes,4509,-27.213607,152.996416,2019-01-31,1,87,unusable,opened mid-2015; only 1 month pre in data
+QLD,Costco Ipswich Fuel Station,1 Wood Street,Bundamba,4304,-27.590776,152.820541,2019-03-27,3,85,unusable,first seen Mar 2019; only 3 months pre

@@ -1,0 +1,18 @@
+# Local-only — never commit.
+# Holds the 1.86 GB raw-API cache, NSW FuelCheck credentials, and
+# superseded historical analyses.
+_local/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/

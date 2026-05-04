@@ -1,0 +1,15 @@
+municipio,state,opening_date,has_fuel,registry,registry_start,months_pre,months_post,status,notes
+Crossroads (Casula),NSW,2015-06-15,yes,FuelCheck,2016-08-01,0,116,unusable,opened before FuelCheck data starts; no pre-period
+Marsden Park,NSW,2017-08-30,yes,FuelCheck,2016-08-01,12,104,usable,opened ~12 months after FuelCheck started; tight but passes
+Auburn (Lidcombe),NSW,2025-07-01,yes,FuelCheck,2016-08-01,107,10,marginal,plenty of pre-data but only ~10 months post
+North Lakes,QLD,2015-06-15,yes,QLD scheme,2018-12-01,0,89,unusable,opened before QLD scheme started
+Coomera,QLD,2023-05-23,yes,QLD scheme,2018-12-01,53,35,usable,clean pre and post windows
+Casuarina,WA,2022-12-01,yes,FuelWatch,2001-01-01,263,40,usable,abundant pre-data
+Perth Airport,WA,2020-02-15,yes,FuelWatch,2001-01-01,229,74,usable,abundant pre-data; 6+ years post
+Canberra (Majura),ACT,2015-06-15,yes,none,,0,0,unusable,no public real-time fuel registry in ACT
+Kilburn (Adelaide),SA,2015-06-15,yes,SA scheme,2021-03-18,0,61,unusable,opened before SA scheme started
+Moorabbin,VIC,2015-06-15,yes,VIC voluntary,unknown,unknown,unknown,dubious,VIC scheme is voluntary and incomplete
+Epping,VIC,unknown,yes,VIC voluntary,unknown,unknown,unknown,dubious,VIC scheme is voluntary and incomplete
+Ringwood,VIC,unknown,no,VIC voluntary,unknown,unknown,unknown,no_fuel,warehouse only no fuel station
+Docklands,VIC,2009-08-01,no,VIC voluntary,unknown,unknown,unknown,no_fuel,first Costco AU but no fuel station
+Ardeer,VIC,2025-04-01,yes,VIC voluntary,unknown,unknown,unknown,dubious,opened too recently for meaningful post-period anyway

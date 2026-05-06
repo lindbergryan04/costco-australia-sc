@@ -16,3 +16,6 @@ Thumbs.db
 # Editor
 .vscode/
 .idea/
+.claude/worktrees/stoic-lumiere-eaa81e/
+plan_of_attack.pdf
+main_group_project_question_and_dataset.pdf

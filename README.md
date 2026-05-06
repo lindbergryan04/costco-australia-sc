@@ -8,15 +8,17 @@ opening dates. Identification strategy: **synthetic control**.
 ## Repo layout
 
 ```
-australia/
+.
 ├── README.md                           ← this file
+├── references.md                       external sources used in §1 and §2
 │
 ├── deliverables/                       handed-in PDFs
 │   ├── question_and_dataset.pdf
-│   └── plan_of_attack_section_1.pdf
+│   ├── plan_of_attack_section_1.pdf
+│   └── plan_of_attack_section_2.pdf
 │
 ├── scripts/
-│   ├── _nsw_reader.py                  shared utility — robust NSW XLSX iterator
+│   ├── _nsw_reader.py                  shared utility (robust NSW XLSX iterator)
 │   ├── data_acquisition/                         data acquisition
 │   │   ├── pull_au_data.py             pulls historical state-registry data
 │   │   ├── pull_nsw_stations.py        pulls live NSW FuelCheck station list
@@ -26,7 +28,9 @@ australia/
 │   │   └── verify_sc_inputs.py         filter checks on the donor pool
 │   └── deliverables/
 │       ├── build_question_and_dataset_pdf.py
-│       └── build_plan_of_attack_section_1_pdf.py
+│       ├── build_plan_of_attack_section_1_pdf.py
+│       ├── build_plan_of_attack_section_2_pdf.py
+│       └── regenerate_treated_event_studies_plot.py
 │
 ├── data/                               (small, committable)
 │   ├── stations/
@@ -56,10 +60,9 @@ australia/
 │       ├── 01_price_histogram.png
 │       ├── 02_unleaded_median_over_time.png
 │       ├── 03_distance_to_costco_hist.png
-│       ├── 04_classification_counts.png
 │       └── 05_treated_event_studies.png
 │
-└── _local/                             ★ DO NOT COMMIT — local-only ★
+└── _local/                             ★ DO NOT COMMIT, local-only ★
     ├── .nsw_credentials.json           NSW FuelCheck API key (sensitive)
     ├── cache/                          1.86 GB of raw API snapshots
     │   ├── nsw/                        93 monthly XLSX files
@@ -80,13 +83,13 @@ state's open-data license:
 **[Download all three state archives (Dropbox)](https://www.dropbox.com/scl/fo/chbey2wl68rmfpr7pyebu/AAv432hXHk078lsbcMFmrN4?rlkey=153uqubvpf9xq4u1su1molnie&st=x1w4jzva&dl=0)**
 
 Contains:
-- NSW FuelCheck — Aug 2016 to Apr 2026 (originally published at data.nsw.gov.au)
-- QLD Fuel Price Reporting Scheme — Dec 2018 to Dec 2025 (originally published at data.qld.gov.au)
-- WA FuelWatch — Jan 2018 to Apr 2026 (originally published at data.wa.gov.au)
+- NSW FuelCheck: Aug 2016 to Apr 2026 (originally published at data.nsw.gov.au)
+- QLD Fuel Price Reporting Scheme: Dec 2018 to Dec 2025 (originally published at data.qld.gov.au)
+- WA FuelWatch: Jan 2018 to Apr 2026 (originally published at data.wa.gov.au)
 
 To reproduce the SC inputs from raw data, download the archives, extract
-each into `australia/_local/cache/{nsw,qld,wa}/`, then run
-`python australia/scripts/synthetic_control_input/build_sc_inputs.py`. See the next section
+each into `_local/cache/{nsw,qld,wa}/`, then run
+`python scripts/synthetic_control_input/build_sc_inputs.py`. See the next section
 for the full pipeline.
 
 ## Running the pipeline from scratch
@@ -95,10 +98,10 @@ If you have just cloned the repo you will not have `_local/` (the
 cache and credentials are not committed). To rebuild the synthetic control inputs:
 
 1. **Populate the cache.** Either download the Dropbox archives above and
-   extract them into `australia/_local/cache/{nsw,qld,wa}/`, or pull
+   extract them into `_local/cache/{nsw,qld,wa}/`, or pull
    directly from the source APIs:
    ```bash
-   python australia/scripts/data_acquisition/pull_au_data.py
+   python scripts/data_acquisition/pull_au_data.py
    ```
    The pull-from-API path takes ~15 minutes on a fresh run; cached files
    skip re-download. The Dropbox path is faster and gives you a frozen
@@ -108,7 +111,7 @@ cache and credentials are not committed). To rebuild the synthetic control input
    the live NSW station-coordinate snapshot). Register at
    <https://api.nsw.gov.au/Account/Register>, subscribe to the free Fuel
    API, and save your key + secret into
-   `australia/_local/.nsw_credentials.json`:
+   `_local/.nsw_credentials.json`:
    ```json
    {
      "api_key": "<your-api-key>",
@@ -118,27 +121,27 @@ cache and credentials are not committed). To rebuild the synthetic control input
    ```
 
 3. **Pull the live station-coordinate snapshots** (only if you want to
-   refresh — the committed `data/stations/` is already current):
+   refresh; the committed `data/stations/` is already current):
    ```bash
-   python australia/scripts/data_acquisition/pull_nsw_stations.py
-   python australia/scripts/data_acquisition/build_station_coords.py
+   python scripts/data_acquisition/pull_nsw_stations.py
+   python scripts/data_acquisition/build_station_coords.py
    ```
 
 4. **Build the synthetic-control inputs**:
    ```bash
-   python australia/scripts/synthetic_control_input/build_sc_inputs.py
+   python scripts/synthetic_control_input/build_sc_inputs.py
    ```
    Reads from `_local/cache/`, writes to `data/sc_inputs/`. Takes ~10
    minutes (NSW XLSX parse dominates).
 
 5. **Verify the donor pool**:
    ```bash
-   python australia/scripts/synthetic_control_input/verify_sc_inputs.py
+   python scripts/synthetic_control_input/verify_sc_inputs.py
    ```
 
 6. **(Optional) Rebuild Section 1 artifacts**:
    ```bash
-   python australia/section_1/describe_data.py
+   python section_1/describe_data.py
    ```
 
 ## Treated units
@@ -149,7 +152,7 @@ Four Costco fuel stations meet the pre/post coverage requirements:
 |---|---|---|---:|---:|
 | Coomera | QLD | May 2023 | 51 | 31 |
 | Casuarina | WA | November 2022 | 58 | 42 |
-| Perth Airport | WA | April 2020 | 27 | 73 |
+| Perth Airport | WA | February 2020 | 26 | 74 |
 | Lake Macquarie | NSW | May 2022 | 58 | 35 |
 
 Six additional Costcos (Marsden Park, Auburn, Canberra Airport, Casula,

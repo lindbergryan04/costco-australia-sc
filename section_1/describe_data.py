@@ -1,5 +1,5 @@
 """
-Section 1 — Raw Data Description.
+Section 1: Raw Data Description.
 
 Single-script pipeline that produces every Section 1 artifact:
 
@@ -11,7 +11,6 @@ Single-script pipeline that produces every Section 1 artifact:
   australia/section_1/plots/01_price_histogram.png
   australia/section_1/plots/02_unleaded_median_over_time.png
   australia/section_1/plots/03_distance_to_costco_hist.png
-  australia/section_1/plots/04_classification_counts.png
   australia/section_1/plots/05_treated_event_studies.png
 
 All visualizations are at the postcode-month level (per group decision).
@@ -44,7 +43,7 @@ OUT = "australia/section_1"
 COSTCOS_TREATED = [
     ("QLD", "Coomera",        dt.date(2023, 5, 23), -27.850829, 153.314369),
     ("WA",  "Casuarina",      dt.date(2022, 11, 11), -32.233481, 115.853714),
-    ("WA",  "Perth Airport",  dt.date(2020, 4, 11), -31.940377, 115.951869),
+    ("WA",  "Perth Airport",  dt.date(2020, 2, 19), -31.940377, 115.951869),
     ("NSW", "Lake Macquarie", dt.date(2022, 5, 2),  -32.946111, 151.628054),
 ]
 # All Costcos (used to classify stations as treated/donor/excluded)
@@ -89,7 +88,7 @@ def is_unleaded_wa(p):  return str(p).strip().upper() == "ULP"
 # ----------------------------------------------------------------------------
 # Phase A: gather REGISTRY-level facts (raw observation count, variable count,
 # unique stations/brands/postcodes/fuel types, date range). One pass per
-# registry, lightweight — does not load any prices into memory.
+# registry, lightweight; does not load any prices into memory.
 # ----------------------------------------------------------------------------
 
 def scan_nsw_meta():
@@ -246,7 +245,7 @@ def load_station_classification():
 
 def ingest_panel(by_key, by_name):
     """Return list of (state, postcode, year, month, price, is_costco_record).
-    Excludes Costco's own records — they're not part of either treated or donor
+    Excludes Costco's own records: they're not part of either treated or donor
     aggregation."""
     out = []
     # NSW (using the robust reader)
@@ -418,7 +417,7 @@ def write_unit_of_observation_md():
     text = """# Unit of observation, by registry
 
 ## NSW FuelCheck (monthly XLSX)
-Each row is one **price update** — a station × fuel type × the timestamp
+Each row is one **price update**: a station × fuel type × the timestamp
 at which the operator changed (or re-confirmed) its posted price. NSW
 FuelCheck does not snapshot daily; it stores price-change events.
 
@@ -428,7 +427,7 @@ Schema: `ServiceStationName, Address, Suburb, Postcode, Brand, FuelCode,
 PriceUpdatedDate, Price`.
 
 ## QLD Fuel Price Reporting Scheme (monthly CSV)
-Each row is one **price-change event** — a station × fuel type × the UTC
+Each row is one **price-change event**: a station × fuel type × the UTC
 timestamp at which the price changed. Like NSW, the QLD scheme stores
 events rather than daily snapshots.
 
@@ -441,7 +440,7 @@ Fuel_Type, Price, TransactionDateutc`.
 Note: `Price` is in tenths of cents (e.g., `1899` = `189.9 ¢/L`).
 
 ## WA FuelWatch (monthly CSV)
-Each row is a **daily snapshot** — a station × fuel type × calendar day.
+Each row is a **daily snapshot**: a station × fuel type × calendar day.
 Unlike NSW and QLD, FuelWatch publishes one record per station per day
 regardless of whether the price changed.
 
@@ -493,7 +492,7 @@ def write_summary_statistics(panel, classified):
                           "of the 10 Costco fuel stations.",
                           unit="km", n=len(dists)))
 
-    # Independent variable 2: treated/donor classification — categorical, just
+    # Independent variable 2: treated/donor classification (categorical), just
     # report counts
     counts = Counter(r["class"] for r in classified)
     for klass in ["treated", "donor_eligible", "excluded_donut"]:
@@ -574,9 +573,16 @@ def write_data_quality_md(panel, classified, metas):
   to historical records by `(normalized_name, postcode)`. Coverage:
   NSW = 3,281 stations, WA = 921 stations, QLD = 1,882 stations,
   total = 6,084.
-- **Limitation**: stations that closed before April 2026 do not appear in
-  the live API and their historical records can fail to match. We estimate
-  this at ≤5% of records based on station-count comparisons.
+- **Limitation**: stations that closed, rebranded, or were re-numbered
+  before the April 2026 live-API pull do not appear in the snapshot, so
+  their historical rows fail the `(state, normalised name, postcode)`
+  join. The snapshot misses **2,376 of 4,543 NSW historical stations
+  (52.3%)** and **673 of 1,423 WA historical stations (47.3%)**. QLD
+  is unaffected because its historical files carry lat/lng inline. The
+  loss falls almost entirely on the donor pool (all four treated
+  Costcos join cleanly), and 196 donor postcodes survive the downstream
+  three-station / 24-month filters. Row-level impact on the analysis
+  panel is reported in Section 2(g)'s funnel.
 
 ## `brand`
 - **NSW Costco rename in May 2022**: every NSW Costco station was renamed
@@ -609,10 +615,10 @@ def write_data_quality_md(panel, classified, metas):
   project as descriptive context.
 
 ## Duplicate rows
-- NSW: not duplicates — multiple price-change rows per station-day are
+- NSW: not duplicates; multiple price-change rows per station-day are
   legitimate operator price updates.
-- QLD: same — price-change-event records, not snapshots.
-- WA: at most one row per station-day-fuel — no duplicate concern.
+- QLD: same; price-change-event records, not snapshots.
+- WA: at most one row per station-day-fuel; no duplicate concern.
 
 ## Donor-pool filtering
 - Out of all postcodes with any non-Costco unleaded data, the donor pool
@@ -629,10 +635,16 @@ def write_data_quality_md(panel, classified, metas):
   spillover; excluded from both treated and donor groups).
 
 ## Source-document confidence
-- Treatment dates were verified against each Costco's first-appearance
-  date in its state's registry — a stronger anchor than warehouse-opening
-  press dates, since several warehouses opened months before their fuel
-  stations did.
+- Treatment dates were initially set to each Costco's first-appearance
+  date in the relevant state's price registry, then cross-validated
+  against trade press, Costco corporate announcements, and news coverage
+  (Section 2(d)). Coomera matched its announced fuel-station opening
+  exactly. Casuarina and Lake Macquarie had no fuel-station-specific
+  announced date in public sources and retained the registry date.
+  Perth Airport had a 52-day discrepancy: the ACAPMAg trade press
+  reported the petrol station selling fuel on 19 February 2020, while
+  the first FuelWatch record dates 11 April 2020. The announced date
+  supersedes per the 30-day validation rule.
 """
     out = f"{OUT}/data_quality.md"
     with open(out, "w") as f:
@@ -764,13 +776,13 @@ def plot_classification_counts(classified):
 
 
 def plot_treated_event_studies(panel):
-    """One panel per treated Costco — mean price across treated postcodes
-    over time. We approximate 'treated postcodes' as those that survive
-    the 5km filter near each Costco — or equivalently, the postcodes the
-    treated stations live in. For the visualization we use the
+    """One panel per treated Costco showing mean price across treated
+    postcodes over time. We approximate 'treated postcodes' as those that
+    survive the 5km filter near each Costco (equivalently, the postcodes
+    the treated stations live in). For the visualization we use the
     treated_units.csv produced by Phase 5 if available, falling back to a
     direct postcode lookup."""
-    # Use the existing treated_units.csv panel — it's already aggregated
+    # Use the existing treated_units.csv panel; it's already aggregated
     treated = []
     try:
         with open("australia/data/sc_inputs/treated_units.csv") as f:
@@ -792,7 +804,7 @@ def plot_treated_event_studies(panel):
         rs = sorted([r for r in treated if r["costco_key"] == ckey],
                     key=lambda r: r["date"])
         if not rs:
-            ax.set_title(f"{ckey} — no data")
+            ax.set_title(f"{ckey}: no data")
             continue
         ds = [r["date"] for r in rs]
         ys = [r["mean_price_cents"] for r in rs]
@@ -801,7 +813,7 @@ def plot_treated_event_studies(panel):
         ax.axvline(openings[ckey], color="red", linestyle="--",
                    label=f"opens {openings[ckey]}", linewidth=1)
         ax.set_ylabel("¢/L")
-        ax.set_title(f"{ckey} — treated-market mean unleaded price")
+        ax.set_title(f"{ckey}: treated-market mean unleaded price")
         ax.legend(loc="upper left", fontsize=9)
         ax.grid(alpha=0.3)
         ax.xaxis.set_major_locator(YearLocator())
@@ -855,7 +867,6 @@ def main():
     plot_price_histogram(panel)
     plot_unleaded_median_over_time(panel)
     plot_distance_to_costco_hist(classified)
-    plot_classification_counts(classified)
     plot_treated_event_studies(panel)
     print()
 

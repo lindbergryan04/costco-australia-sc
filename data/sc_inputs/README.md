@@ -10,7 +10,7 @@ Lake Macquarie (NSW).
 
 ## Files
 
-### `treated_units.csv` — the 4 treated Costco markets
+### `treated_units.csv`: the 4 treated Costco markets
 One row per (Costco × month). For each Costco, the treated outcome is the
 **mean monthly unleaded price across all non-Costco stations within 5 km**
 of that Costco's coordinates.
@@ -28,7 +28,7 @@ of that Costco's coordinates.
 
 Total rows: **375** (4 Costcos × ~80–100 months each).
 
-### `donor_pool.csv` — the candidate donor postcodes
+### `donor_pool.csv`: the candidate donor postcodes
 One row per (postcode × month). Each donor unit is a postcode's mean unleaded
 price across all non-Costco stations in that postcode.
 
@@ -45,7 +45,7 @@ price across all non-Costco stations in that postcode.
 
 Total rows: **17,578** spanning **196 donor postcodes**.
 
-### `treated_metadata.csv` — one row per treated Costco
+### `treated_metadata.csv`: one row per treated Costco
 | Column | Description |
 |---|---|
 | `costco_key` | name |
@@ -56,7 +56,7 @@ Total rows: **17,578** spanning **196 donor postcodes**.
 | `n_post_months` | months of post-treatment data |
 | `avg_n_unique_stations` | average number of distinct stations contributing to the treated mean per month |
 
-### `donor_metadata.csv` — one row per donor postcode
+### `donor_metadata.csv`: one row per donor postcode
 | Column | Description |
 |---|---|
 | `postcode` | 4-digit code |
@@ -68,9 +68,9 @@ Total rows: **17,578** spanning **196 donor postcodes**.
 ## Filtering applied to donor pool
 
 A postcode was **excluded** if any of:
-- It lies within 20 km of any Costco (362 postcodes excluded — could be picking up Costco effects)
-- Fewer than 3 unique stations average per month (446 excluded — monthly means too noisy)
-- Fewer than 24 months of observations (0 excluded — coverage was good)
+- It lies within 20 km of any Costco (362 postcodes excluded; could be picking up Costco effects)
+- Fewer than 3 unique stations average per month (446 excluded; monthly means too noisy)
+- Fewer than 24 months of observations (0 excluded; coverage was good)
 
 196 donor postcodes survived all filters: NSW = 104, QLD = 56, WA = 36.
 
@@ -80,10 +80,10 @@ A postcode was **excluded** if any of:
 |---|---|---:|---:|---:|---:|
 | Coomera | QLD | 51 | 31 | ~82% (sparse 2018-2020) | 19.6 |
 | Casuarina | WA | 58 | 42 | 100% | **3.2** ⚠️ |
-| Perth Airport | WA | 27 | 73 | 100% | 13.9 |
+| Perth Airport | WA | 26 | 74 | 100% | 13.9 |
 | Lake Macquarie | NSW | 58 | 35 | ~93% (small intermittent gaps) | 9.4 |
 
-⚠️ Casuarina has only 3.2 average stations within 5 km — a sparse treated
+⚠️ Casuarina has only 3.2 average stations within 5 km, a sparse treated
 market. This is geographic: south-of-Perth Casuarina is a coastal residential
 area with relatively few competing fuel stations. The treated mean will be
 noisier for Casuarina than the others; consider whether to use a wider

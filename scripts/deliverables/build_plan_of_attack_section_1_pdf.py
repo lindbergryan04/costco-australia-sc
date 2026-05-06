@@ -10,6 +10,8 @@ contingencies paragraph.
 Output: /Users/ryanlindberg/Desktop/Classes/MGT159/project/australia/deliverables/plan_of_attack_section_1.pdf
 """
 
+from pathlib import Path
+
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
@@ -21,10 +23,9 @@ from reportlab.platypus import (
 )
 
 
-OUTFILE = ("/Users/ryanlindberg/Desktop/Classes/MGT159/project/"
-           "australia/deliverables/plan_of_attack_section_1.pdf")
-PLOTS_DIR = ("/Users/ryanlindberg/Desktop/Classes/MGT159/project/"
-             "australia/section_1/plots")
+REPO_ROOT = Path(__file__).resolve().parents[2]
+OUTFILE = str(REPO_ROOT / "deliverables" / "plan_of_attack_section_1.pdf")
+PLOTS_DIR = str(REPO_ROOT / "section_1" / "plots")
 
 
 def _table(rows, col_widths, header=True, body_font_size=10):
@@ -93,7 +94,7 @@ def main():
     story = []
 
     # ---- Title block ----
-    story.append(Paragraph("Plan of Attack: Section 1 &mdash; "
+    story.append(Paragraph("Plan of Attack: Section 1, "
                            "Raw Data Description", title_style))
     story.append(Paragraph("Costco Australia / Synthetic Control",
                            subtitle_style))
@@ -129,13 +130,15 @@ def main():
         "via data.nsw.gov.au; we pulled 93 monthly files covering "
         "December 2016 through January 2026, totalling <b>4,401,971 "
         "price-update records</b> with 8 columns. Each row is one "
-        "price-update event &mdash; a station &times; fuel type &times; "
-        "the timestamp at which the operator changed (or re-confirmed) "
-        "its posted price; FuelCheck stores price-change events rather "
-        "than daily snapshots. Composite unique key: "
+        "price-update event: a station &times; fuel type &times; the "
+        "timestamp at which the operator changed (or re-confirmed) its "
+        "posted price. FuelCheck stores price-change events rather than "
+        "daily snapshots. Composite unique key: "
         "<font face='Courier'>(ServiceStationName, Address, FuelCode, "
-        "PriceUpdatedDate)</font>. The file contains 4,813 unique stations, "
-        "62 unique brands, 565 unique postcodes, and 11 unique fuel-type "
+        "PriceUpdatedDate)</font>. The file contains 4,813 unique "
+        "stations (4,543 after the name normalization used in the "
+        "live-API coordinate join, see Section 2(f)), 62 unique brands, "
+        "565 unique postcodes, and 11 unique fuel-type "
         "codes (regular unleaded ULP/U91/E10, premium PUL95/PUL98, diesel "
         "DSL/PDL, LPG, and others). Coordinates are not in the historical "
         "files; we attached lat/lng by joining station name + postcode to "
@@ -177,8 +180,8 @@ def main():
         "CSVs via data.qld.gov.au; we pulled 85 monthly files covering "
         "December 2018 through December 2025, totalling <b>4,970,650 "
         "price-change records</b> with 13 columns. Each row is one "
-        "price-change event &mdash; a station &times; fuel type &times; "
-        "the UTC timestamp at which the price changed. Composite unique "
+        "price-change event: a station &times; fuel type &times; the "
+        "UTC timestamp at which the price changed. Composite unique "
         "key: <font face='Courier'>(SiteId, Fuel_Type, "
         "TransactionDateutc)</font>. The file contains 1,883 unique "
         "stations, 37 brands, 375 postcodes, and 10 fuel-type strings. "
@@ -220,7 +223,7 @@ def main():
     story.append(Paragraph(
         "WA FuelWatch is maintained by the Western Australia Government "
         "and has required daily mandatory price reporting from every "
-        "retail fuel station in WA since January 2001 &mdash; the longest "
+        "retail fuel station in WA since January 2001, the longest "
         "fuel-price history of any Australian state. Historical records "
         "are published as monthly CSVs via data.wa.gov.au; we pulled 100 "
         "monthly files covering January 2018 through April 2026, "
@@ -228,8 +231,8 @@ def main():
         "columns. (We chose not to pull the full 2001&ndash;2017 archive "
         "because no usable Costco event has a pre-period that benefits "
         "from extending earlier than 2018.) Each row is a daily snapshot "
-        "&mdash; a station &times; fuel type &times; calendar day &mdash; "
-        "and unlike NSW and QLD, FuelWatch publishes one record per "
+        "(a station &times; fuel type &times; calendar day), and unlike "
+        "NSW and QLD, FuelWatch publishes one record per "
         "station per day regardless of whether the price changed. "
         "Composite unique key: <font face='Courier'>(TRADING_NAME, "
         "ADDRESS, PRODUCT_DESCRIPTION, PUBLISH_DATE)</font>. The file "
@@ -272,11 +275,11 @@ def main():
     story.append(Paragraph(
         "We hand-compiled a 10-row table of every Costco fuel station in "
         "Australia, recording each station&rsquo;s state, suburb, "
-        "postcode, coordinates, and treatment date. The treatment date is "
-        "the station&rsquo;s first-observed date in the relevant "
-        "state&rsquo;s price registry (a stronger anchor than warehouse-"
-        "opening press dates, since several warehouses opened months "
-        "before their fuel stations did). The composite unique key is "
+        "postcode, coordinates, and treatment date. Each treatment date "
+        "is the station&rsquo;s first-observed date in the relevant "
+        "state&rsquo;s price registry, then cross-validated against "
+        "announced fuel-station opening dates and trade press "
+        "(Section 2(d)). The composite unique key is "
         "<font face='Courier'>name</font>. Of the 10 stations, four are "
         "usable as treated units in the synthetic-control analysis "
         "(Coomera, Casuarina, Perth Airport, Lake Macquarie); the "
@@ -289,19 +292,22 @@ def main():
     story.append(Paragraph(
         "Outcome and treatment construction", subsection_style))
     story.append(Paragraph(
-        "Our main outcome is the monthly mean unleaded retail price, "
-        "constructed in Section 2 by aggregating the price-update / daily-"
-        "snapshot records to (state &times; postcode &times; year-month) "
-        "cells, filtering to regular unleaded (FuelCode in {U91, E10, P91} "
-        "for NSW; Fuel_Type in {Unleaded 91, e10} for QLD; "
-        "PRODUCT_DESCRIPTION = ULP for WA), and computing a simple mean "
-        "of all price observations within each cell. The treatment "
-        "indicator &mdash; a per-Costco binary post-opening flag &mdash; "
-        "is not in the raw data and is constructed in Section 2 by "
-        "merging the hand-collected treatment-date table onto each "
-        "treated postcode-month panel. The synthetic-control donor pool "
-        "consists of postcode-monthly time series for postcodes located "
-        "more than 20 km from any Costco fuel station.",
+        "Our main outcome is the monthly mean unleaded retail price "
+        "(cents per litre), constructed in Section 2 by filtering to "
+        "regular unleaded (FuelCode in {U91, E10, P91} for NSW; Fuel_Type "
+        "in {Unleaded 91, e10} for QLD; PRODUCT_DESCRIPTION = ULP for "
+        "WA) and aggregating in two stages: (station &times; month), "
+        "then across stations within the unit. The unit differs by "
+        "group: each <i>treated</i> unit is a (Costco &times; month) "
+        "cell averaging non-Costco stations within 5 km of one of the "
+        "four treated Costco coordinates; each <i>donor</i> unit is a "
+        "(postcode &times; month) cell averaging non-Costco stations "
+        "within the postcode. The treatment indicator (a per-Costco "
+        "binary post-opening flag) is constructed in "
+        "Section 2 by merging the hand-collected treatment-date table "
+        "onto the treated panel. The donor pool consists of postcodes "
+        "located more than 20 km from any Costco that also clear the "
+        "downstream coverage filters (Section 2(g)).",
         body_style,
     ))
 
@@ -347,8 +353,11 @@ def main():
     story.append(summary_table)
     story.append(Paragraph(
         "Counts: 84 stations classified as treated (within 5 km of a "
-        "treated Costco), 3,926 donor-eligible (>20 km from every Costco), "
-        "1,970 in the 5–20 km exclusion donut.",
+        "treated Costco), 3,926 donor-eligible (>20 km from every "
+        "Costco), 1,970 in the 5&ndash;20 km exclusion donut. The "
+        "17,953 postcode-month rows above are the donor candidate panel "
+        "before geographic and quality filters; the post-filter SC donor "
+        "pool is 17,578 cells (Section 2(g)).",
         caption_style,
     ))
 
@@ -359,7 +368,7 @@ def main():
     story.append(Paragraph(
         "<b>Figure 1.</b> Distribution of postcode-month mean unleaded "
         "prices across the 17,953 panel observations. The distribution "
-        "is approximately bimodal — the lower mode reflects the "
+        "is approximately bimodal: the lower mode reflects the "
         "2018&ndash;2020 price regime, the higher mode reflects the "
         "post-2022 elevated price era. Mean = 160.5&nbsp;¢/L, median "
         "162.2&nbsp;¢/L. No observations outside 92&ndash;259&nbsp;¢/L "
@@ -373,7 +382,7 @@ def main():
                        width=6.5 * inch, height=3.25 * inch))
     story.append(Paragraph(
         "<b>Figure 2.</b> Median of postcode-monthly mean unleaded "
-        "prices over time, by state, January 2018 &mdash; April 2026. "
+        "prices over time, by state, January 2018 to April 2026. "
         "All three states track each other closely throughout: prices "
         "fall in 2018&ndash;2020 (peaking with COVID demand collapse "
         "in early 2020), rise sharply through 2022 (Russia/Ukraine "
@@ -398,22 +407,6 @@ def main():
         "outside any plausible Costco competitive footprint, supporting "
         "the donor pool&rsquo;s status as an untreated counterfactual. "
         "Stations beyond 200&nbsp;km are truncated for readability.",
-        caption_style,
-    ))
-
-    # ---- Figure 4: classification counts (categorical breakdown) ----
-    story.append(Spacer(1, 6))
-    story.append(Image(f"{PLOTS_DIR}/04_classification_counts.png",
-                       width=6.5 * inch, height=3.25 * inch))
-    story.append(Paragraph(
-        "<b>Figure 4.</b> Station counts by classification &times; state. "
-        "Of the 5,980 geocoded stations, 84 are treated (within 5&nbsp;km "
-        "of one of the four treated Costcos), 3,926 are donor-eligible, "
-        "and 1,970 fall in the 5&ndash;20&nbsp;km exclusion donut. "
-        "WA has the smallest pool of donor-eligible stations (a function "
-        "of WA&rsquo;s lower overall station density), but still well "
-        "above the level needed for stable synthetic-control weight "
-        "fitting.",
         caption_style,
     ))
 
@@ -442,9 +435,9 @@ def main():
          Paragraph("Treated", cell_style)],
         [Paragraph("Perth Airport", cell_style),
          Paragraph("WA", cell_style),
-         Paragraph("Apr 2020", cell_style),
-         Paragraph("27", cell_style),
-         Paragraph("73", cell_style),
+         Paragraph("Feb 2020", cell_style),
+         Paragraph("26", cell_style),
+         Paragraph("74", cell_style),
          Paragraph("Treated", cell_style)],
         [Paragraph("Lake Macquarie", cell_style),
          Paragraph("NSW", cell_style),
@@ -493,20 +486,20 @@ def main():
     story.append(treated_table)
     story.append(Spacer(1, 6))
 
-    # ---- Figure 5: per-Costco event studies ----
+    # ---- Figure 4: per-Costco event studies ----
     story.append(Image(f"{PLOTS_DIR}/05_treated_event_studies.png",
                        width=6.5 * inch, height=7.0 * inch))
     story.append(Paragraph(
-        "<b>Figure 5.</b> Treated-market mean unleaded price over time "
+        "<b>Figure 4.</b> Treated-market mean unleaded price over time "
         "for each of the four treated Costcos, with the vertical red "
-        "dashed line marking the Costco&rsquo;s first-observed date in "
-        "the relevant state&rsquo;s registry. Eyeballing pre-period "
-        "trajectories before fitting any model surfaces data-quality "
-        "issues and high-leverage points: Casuarina&rsquo;s sparse "
-        "treated-station count (~3 stations) shows up as month-to-month "
-        "volatility that the other three Costcos don&rsquo;t exhibit; "
-        "Coomera&rsquo;s registry coverage gradually builds up through "
-        "2018&ndash;2020 before stabilizing.",
+        "dashed line marking the validated treatment date "
+        "(Section 2(d)). Eyeballing pre-period trajectories before "
+        "fitting any model surfaces data-quality issues and high-leverage "
+        "points: Casuarina&rsquo;s sparse treated-station count (~3 "
+        "stations) shows up as month-to-month volatility that the other "
+        "three Costcos don&rsquo;t exhibit; Coomera&rsquo;s registry "
+        "coverage gradually builds up through 2018&ndash;2020 before "
+        "stabilizing.",
         caption_style,
     ))
     story.append(Spacer(1, 6))
@@ -531,10 +524,16 @@ def main():
         "(<font face='Courier'>/v1/fuel/prices</font>) and the live WA "
         "FuelWatch API (<font face='Courier'>/api/sites</font>) once and "
         "joining historical records to the live coords by "
-        "(normalized_name, postcode). Coverage: NSW 3,281 stations, WA "
-        "921 stations, QLD 1,882 stations &mdash; total 6,084. Stations "
-        "that have closed before April 2026 do not appear in the live API "
-        "and a small fraction of historical records fail to match (≤5%).",
+        "(normalized_name, postcode). The live-API snapshot contains NSW "
+        "3,281 stations, WA 921 stations, QLD 1,882 stations, totalling "
+        "6,084. Stations that closed, rebranded, or were re-numbered "
+        "before April 2026 are absent from the snapshot, so historical "
+        "rows for them fail the join: the snapshot misses 2,376 of 4,543 "
+        "NSW historical stations (52.3%) and 673 of 1,423 WA historical "
+        "stations (47.3%); QLD is unaffected because its historical files "
+        "carry coordinates inline. The loss falls almost entirely on the "
+        "donor pool: all four treated Costcos join cleanly. Row-level "
+        "impact on the analysis panel is in Section 2(g).",
         body_style,
     ))
     story.append(Paragraph(
@@ -551,7 +550,7 @@ def main():
         "retail unleaded post-2018 (national averages hover 130&ndash;220 "
         "¢/L). After our 50&ndash;500 ¢/L sanity filter, the post-aggregation "
         "panel of 17,953 postcode-months has no observations outside "
-        "92&ndash;259 ¢/L &mdash; well within plausible Australian range.",
+        "92&ndash;259 ¢/L, well within plausible Australian range.",
         body_style,
     ))
     story.append(Paragraph(
@@ -561,8 +560,8 @@ def main():
         "the relevant pre-period (Sep 2020 → May 2023) is fully covered. "
         "Casuarina has only ~3 unique stations within 5 km contributing "
         "to the treated mean, reflecting a sparse coastal residential "
-        "market &mdash; coverage is 100 % but the treated mean is "
-        "noisier than for the other three Costcos. Lake Macquarie has a "
+        "market; coverage is 100 % but the treated mean is noisier than "
+        "for the other three Costcos. Lake Macquarie has a "
         "small number of intermittent monthly gaps (largest 3 months) "
         "that do not impair pre-period fitting.",
         body_style,
@@ -575,14 +574,15 @@ def main():
         "stations on average per month (means too noisy), and 0 with "
         "fewer than 24 months of observations. <b>196 donor postcodes</b> "
         "survive all filters: NSW 104, QLD 56, WA 36, totalling 17,578 "
-        "(postcode &times; month) panel observations.",
+        "(postcode &times; month) panel observations. Per-state "
+        "breakdown of the 362 / 446 / 0 drops is in Section 2(g).",
         body_style,
     ))
     story.append(Paragraph(
         "<b>Multiple records per station-day.</b> NSW and QLD both record "
         "price-update events rather than daily snapshots, so a station "
         "appears multiple times within a day if it changed prices on "
-        "multiple fuel types. These are not duplicates &mdash; they are "
+        "multiple fuel types. These are not duplicates; they are "
         "legitimate event-level records and are correctly aggregated to "
         "monthly means by the panel build.",
         body_style,
@@ -593,17 +593,16 @@ def main():
     story.append(Paragraph(
         "If histograms of postcode-month unleaded prices reveal extreme "
         "outliers in any donor postcode (e.g. a one-time data-entry "
-        "anomaly from a single station that dominates a small postcode), "
-        "we will winsorize at the 1st and 99th percentile of the panel "
-        "before fitting synthetic-control weights. Postcode-months with "
-        "fewer than 3 contributing observations after the panel build "
-        "will be flagged as missing rather than retained at face value. "
-        "If pre-period fit quality for any treated Costco is "
-        "demonstrably poor in Section 3 (visible mismatch between "
-        "treated and synthetic in the pre-period), that Costco will be "
-        "presented with a documented limitation rather than as a headline "
-        "result; we expect Casuarina to be the most likely candidate for "
-        "this treatment given its small treated-station count.",
+        "anomaly from a single station dominating a small postcode), "
+        "the panel is winsorised at the 1st and 99th percentile before "
+        "synthetic-control weight fitting. Postcode-months with fewer "
+        "than 3 contributing observations after the panel build are "
+        "flagged as missing, not retained at face value. If pre-period "
+        "fit quality for any treated Costco is demonstrably poor "
+        "(Section 3, visible mismatch between treated and synthetic in "
+        "the pre-period), that Costco is presented with a documented "
+        "limitation, not as a headline result; Casuarina is the most "
+        "likely candidate given its small treated-station count.",
         body_style,
     ))
 

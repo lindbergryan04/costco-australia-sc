@@ -1,7 +1,7 @@
 # Unit of observation, by registry
 
 ## NSW FuelCheck (monthly XLSX)
-Each row is one **price update** — a station × fuel type × the timestamp
+Each row is one **price update**: a station × fuel type × the timestamp
 at which the operator changed (or re-confirmed) its posted price. NSW
 FuelCheck does not snapshot daily; it stores price-change events.
 
@@ -11,7 +11,7 @@ Schema: `ServiceStationName, Address, Suburb, Postcode, Brand, FuelCode,
 PriceUpdatedDate, Price`.
 
 ## QLD Fuel Price Reporting Scheme (monthly CSV)
-Each row is one **price-change event** — a station × fuel type × the UTC
+Each row is one **price-change event**: a station × fuel type × the UTC
 timestamp at which the price changed. Like NSW, the QLD scheme stores
 events rather than daily snapshots.
 
@@ -24,7 +24,7 @@ Fuel_Type, Price, TransactionDateutc`.
 Note: `Price` is in tenths of cents (e.g., `1899` = `189.9 ¢/L`).
 
 ## WA FuelWatch (monthly CSV)
-Each row is a **daily snapshot** — a station × fuel type × calendar day.
+Each row is a **daily snapshot**: a station × fuel type × calendar day.
 Unlike NSW and QLD, FuelWatch publishes one record per station per day
 regardless of whether the price changed.
 

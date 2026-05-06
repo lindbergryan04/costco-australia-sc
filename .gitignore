@@ -17,6 +17,8 @@ Thumbs.db
 .vscode/
 .idea/
 .claude/
+.claude/worktrees/stoic-lumiere-eaa81e/
+
 # Other
 main_group_project_question_and_dataset.pdf
 plan_of_attack.pdf

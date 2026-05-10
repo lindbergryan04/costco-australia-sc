@@ -1,8 +1,8 @@
 # References
 
-External sources used in Sections 1 and 2 of the Plan of Attack for the
-Costco Australia synthetic-control study (research question: does Costco
-gas-station entry into an Australian local market cause nearby
+External sources used in Sections 1, 2, and 3 of the Plan of Attack for
+the Costco Australia synthetic-control study (research question: does
+Costco gas-station entry into an Australian local market cause nearby
 competitor stations to lower their retail fuel prices?).
 
 ## 1. Primary data sources
@@ -56,7 +56,7 @@ competitor stations to lower their retail fuel prices?).
   coordinates (the historical FuelWatch CSVs contain only address and
   postcode). Coordinates were joined to historical WA rows by
   `(normalized_name, postcode)` (921 WA stations matched), supporting
-  haversine-distance computation to each Costco.
+  great-circle distance computation to each Costco.
 
 ### Hand-collected Costco metadata (`data/catalogs/usable_costcos.csv`)
 
@@ -137,8 +137,8 @@ competitor stations to lower their retail fuel prices?).
   Retail Markets for Gasoline." American Economic Review 102 (5):
   2147–82, 2012.
   https://www.aeaweb.org/articles?id=10.1257/aer.102.5.2147
-- Cited in Section 2(b) (Table 1, "Asymmetric radii") as part of the IO
-  evidence base that retail-gasoline price-spillover footprints are
+- Cited in Section 2(b) (Table 1, "Asymmetric radii") as part of the
+  economics evidence base that retail-gasoline price effects are
   concentrated within roughly 1–5 miles. Used to defend the choice of a
   conservative 5 km treated radius and a 20 km donor buffer.
 
@@ -158,10 +158,11 @@ competitor stations to lower their retail fuel prices?).
   Methods for Comparative Case Studies: Estimating the Effect of
   California's Tobacco Control Program." Journal of the American
   Statistical Association 105 (490): 493–505, 2010.
-- The canonical synthetic-control method underlying the entire research
-  design, referenced implicitly as "the canonical procedure" in Section
-  2(e) and explicitly as the project's identification strategy in the
-  README. Provides the weight-fitting framework that takes the
+- The canonical synthetic-control method, foundational to the project's
+  identification strategy. Sections 1–3 use the term "synthetic control"
+  without inline citation, treating the method as standard; this
+  references doc is the only place the original paper is formally
+  cited. Provides the weight-fitting framework that takes the
   treated-ring and donor-postcode panels built in Sections 1–2 and
   produces the counterfactual estimates evaluated in Section 3.
 

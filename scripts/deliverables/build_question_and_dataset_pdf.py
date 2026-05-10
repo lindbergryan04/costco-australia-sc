@@ -6,8 +6,10 @@ academic-style layout with numbered sections, justified paragraphs, and a
 clean field-table for the dataset description. Modelled on the spec's
 synthetic-control example (food waste bans, page 7 of the spec).
 
-Output: /Users/ryanlindberg/Desktop/Classes/MGT159/project/australia/deliverables/question_and_dataset.pdf
+Output: deliverables/question_and_dataset.pdf (in the worktree).
 """
+
+from pathlib import Path
 
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -20,12 +22,14 @@ from reportlab.platypus import (
 )
 
 
-OUTFILE = "/Users/ryanlindberg/Desktop/Classes/MGT159/project/australia/deliverables/question_and_dataset.pdf"
+REPO_ROOT = Path(__file__).resolve().parents[2]
+OUTFILE = REPO_ROOT / "deliverables" / "question_and_dataset.pdf"
 
 
 def main():
+    OUTFILE.parent.mkdir(parents=True, exist_ok=True)
     doc = SimpleDocTemplate(
-        OUTFILE,
+        str(OUTFILE),
         pagesize=letter,
         leftMargin=0.95 * inch,
         rightMargin=0.95 * inch,

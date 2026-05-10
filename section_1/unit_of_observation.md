@@ -43,7 +43,7 @@ Composite unique key: `Costco_name`.
 Schema: `name, state, suburb, postcode, lat, lng, treatment_date,
 months_pre, months_post, status, notes`.
 
-Source file: `australia/data/catalogs/usable_costcos.csv`.
+Source file: `data/catalogs/usable_costcos.csv`.
 
 ## Analysis panel (constructed in Phase B)
 For the synthetic-control analysis, the raw price-change/snapshot data is

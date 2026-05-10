@@ -7,7 +7,7 @@ then a unified outcome/treatment construction note, summary statistics
 table, treated-Costco table, data quality issues paragraph, and a
 contingencies paragraph.
 
-Output: /Users/ryanlindberg/Desktop/Classes/MGT159/project/australia/deliverables/plan_of_attack_section_1.pdf
+Output: deliverables/plan_of_attack_section_1.pdf (in the worktree).
 """
 
 from pathlib import Path
@@ -94,8 +94,7 @@ def main():
     story = []
 
     # ---- Title block ----
-    story.append(Paragraph("Plan of Attack: Section 1, "
-                           "Raw Data Description", title_style))
+    story.append(Paragraph("Plan of Attack", title_style))
     story.append(Paragraph("Costco Australia / Synthetic Control",
                            subtitle_style))
     story.append(Paragraph(
@@ -106,7 +105,7 @@ def main():
     ))
 
     # ---- Section 1 header ----
-    story.append(Paragraph("1. Raw Data Description", section_style))
+    story.append(Paragraph("Section 1, Raw Data Description", section_style))
     story.append(Paragraph(
         "We use four datasets, described separately below: three "
         "publicly accessible Australian state fuel-price registries that "
@@ -204,8 +203,8 @@ def main():
         [Paragraph("Site_Post_Code", cell_mono),
          Paragraph("Postcode (4-digit)", cell_style)],
         [Paragraph("Site_Latitude / Site_Longitude", cell_mono),
-         Paragraph("WGS84 coordinates (used for haversine distance to "
-                   "Costco)", cell_style)],
+         Paragraph("WGS84 coordinates (used for great-circle distance "
+                   "to Costco)", cell_style)],
         [Paragraph("Fuel_Type", cell_mono),
          Paragraph("Fuel-type label (Unleaded 91, e10, Premium 95, ...)",
                    cell_style)],

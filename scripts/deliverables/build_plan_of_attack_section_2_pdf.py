@@ -106,20 +106,13 @@ def main():
     story.append(Paragraph(
         "Plan of Attack: Section 2, Sample Construction Plan",
         title_style))
-    story.append(Paragraph("Costco Australia / Synthetic Control",
-                           subtitle_style))
-    story.append(Paragraph(
-        "<b>Research question:</b> Does the entry of a Costco gas station "
-        "into an Australian local market cause nearby competitor stations "
-        "to lower their retail fuel prices?",
-        rq_style,
-    ))
+    story.append(Spacer(1, 14))
 
     # ---- (a) Sample window ----
     story.append(Paragraph("(a) Sample window", section_style))
     story.append(Paragraph(
         "<b>Endpoints.</b> The pre-period for each treated Costco runs "
-        "from the start of its state's price registry (August 2016 for "
+        "from the start of its state's price registry (December 2016 for "
         "NSW, January 2018 for WA, December 2018 for QLD) up to the day "
         "before that Costco's validated treatment date (see (d)). The "
         "post-period runs from the treatment date through April 2026, "
@@ -191,15 +184,15 @@ def main():
     ))
     story.append(Paragraph(
         "<b>Asymmetric radii (5 km treated, 20 km donor buffer).</b> "
-        "The IO literature on retail fuel-price competition (e.g. "
-        "Houde&nbsp;2012; Eckert&nbsp;2013) finds price-spillover "
-        "footprints concentrated within roughly 1&ndash;5 miles. 5 km "
+        "The economics literature on retail fuel-price competition "
+        "(Houde&nbsp;2012; Eckert&nbsp;2013) finds price effects "
+        "concentrated within roughly 1&ndash;5 miles. 5 km "
         "(~3.1&nbsp;mi) sits at the conservative end of that range, "
         "small enough to capture genuinely competing stations but not so "
         "small as to drop most of the local market. The 20 km donor "
         "buffer is intentionally a 4&times; multiple, providing a wide "
-        "exclusion donut to ensure SUTVA holds: no donor postcode is "
-        "partly &lsquo;treated&rsquo; by an off-pool Costco. The "
+        "exclusion donut so that no donor postcode is partly affected "
+        "by a Costco that isn't the one we're studying. The "
         "asymmetry (small treated radius, large donor buffer) biases "
         "the design <i>against</i> finding an effect: narrow treated "
         "definition shrinks the treated population to the most exposed "
@@ -258,8 +251,8 @@ def main():
          Paragraph("Re-run at 3 km and 8 km", cell_small)],
         [Paragraph("Donor buffer", cell_small),
          Paragraph("&gt;20 km", cell_small),
-         Paragraph("4&times; the treated radius; ensures SUTVA, asymmetric "
-                   "to bias against effect", cell_small),
+         Paragraph("4&times; the treated radius; keeps donors fully "
+                   "outside any Costco's competitive zone", cell_small),
          Paragraph("Re-run at 15 km and 30 km", cell_small)],
         [Paragraph("Donor stations / month", cell_small),
          Paragraph("&ge;3", cell_small),
@@ -296,9 +289,8 @@ def main():
     story.append(Paragraph(
         "<b>Construction.</b> The dependent variable is the monthly mean "
         "unleaded retail price (cents per litre) at the treated 5 km ring "
-        "or the donor postcode, computed in two stages: first within each "
-        "(station &times; month), then across stations in the ring or "
-        "postcode. Section 1's Figure 1 shows the post-aggregation "
+        "or the donor postcode; see (e) for the two-stage construction. "
+        "Section 1's Figure 1 shows the post-aggregation "
         "distribution (n = 17,953 postcode-months, range 92&ndash;259 "
         "&cent;/L, approximately bimodal across the pre-2022 / post-2022 "
         "price-regime divide).",
@@ -410,7 +402,7 @@ def main():
     ))
     story.append(Paragraph(
         "<b>Station coordinates and distance-to-Costco.</b> Distance is "
-        "computed via the haversine great-circle formula from each "
+        "computed as the great-circle distance from each "
         "station's coordinates to the nearest Costco fuel station's "
         "coordinates. NSW and WA historical registry files do not carry "
         "lat/lng, so coordinates are joined from one-time pulls of the "
@@ -578,8 +570,8 @@ def main():
          Paragraph("&minus;231 pcds", cell_small_right),
          Paragraph("&minus;51 pcds", cell_small_right),
          Paragraph("&minus;80 pcds", cell_small_right),
-         Paragraph("SUTVA: donors must be unambiguously outside "
-                   "Costco's competitive footprint",
+         Paragraph("Donors must be unambiguously outside any Costco's "
+                   "competitive footprint",
                    cell_small)],
         [Paragraph("Drop postcodes with &lt;3 stations / month avg",
                    cell_small),

@@ -15,7 +15,8 @@ opening dates. Identification strategy: **synthetic control**.
 ├── deliverables/                       handed-in PDFs
 │   ├── question_and_dataset.pdf
 │   ├── plan_of_attack_section_1.pdf
-│   └── plan_of_attack_section_2.pdf
+│   ├── plan_of_attack_section_2.pdf
+│   └── plan_of_attack_section_3.pdf
 │
 ├── scripts/
 │   ├── _nsw_reader.py                  shared utility (robust NSW XLSX iterator)
@@ -30,6 +31,7 @@ opening dates. Identification strategy: **synthetic control**.
 │       ├── build_question_and_dataset_pdf.py
 │       ├── build_plan_of_attack_section_1_pdf.py
 │       ├── build_plan_of_attack_section_2_pdf.py
+│       ├── build_plan_of_attack_section_3_pdf.py
 │       └── regenerate_treated_event_studies_plot.py
 │
 ├── data/                               (small, committable)
@@ -62,6 +64,13 @@ opening dates. Identification strategy: **synthetic control**.
 │       ├── 03_distance_to_costco_hist.png
 │       └── 05_treated_event_studies.png
 │
+├── section_3/                          Section 3 of the plan-of-attack
+│   ├── build_section_3_plots.py        produces all illustrative figures
+│   └── plots/
+│       ├── 01_sc_trajectories_illustrative.png
+│       ├── 02_donor_weights_illustrative.png
+│       └── 03_event_study_aggregate_illustrative.png
+│
 └── _local/                             ★ DO NOT COMMIT, local-only ★
     ├── .nsw_credentials.json           NSW FuelCheck API key (sensitive)
     ├── cache/                          1.86 GB of raw API snapshots
@@ -83,7 +92,7 @@ state's open-data license:
 **[Download all three state archives (Dropbox)](https://www.dropbox.com/scl/fo/chbey2wl68rmfpr7pyebu/AAv432hXHk078lsbcMFmrN4?rlkey=153uqubvpf9xq4u1su1molnie&st=x1w4jzva&dl=0)**
 
 Contains:
-- NSW FuelCheck: Aug 2016 to Apr 2026 (originally published at data.nsw.gov.au)
+- NSW FuelCheck: Dec 2016 to Jan 2026 (originally published at data.nsw.gov.au)
 - QLD Fuel Price Reporting Scheme: Dec 2018 to Dec 2025 (originally published at data.qld.gov.au)
 - WA FuelWatch: Jan 2018 to Apr 2026 (originally published at data.wa.gov.au)
 

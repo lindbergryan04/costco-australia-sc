@@ -1,5 +1,5 @@
 variable,description,n,mean,sd,min,p25,median,p75,max,unit
-mean_unleaded_price_cents_per_L,Postcode-month mean unleaded price (¢/L). Outcome variable for the synthetic-control analysis.,17953,160.535,28.407,91.979,137.267,162.18,183.576,258.997,¢/L
+mean_unleaded_price_cents_per_L,"Postcode-month mean unleaded price (¢/L), restricted to the SC analysis sample (donor pool + treated 5 km rings). Outcome variable for the synthetic-control analysis.",17953,160.535,28.407,91.979,137.267,162.18,183.576,258.997,¢/L
 station_min_dist_any_costco_km,Per-station haversine distance (km) to the nearest of the 10 Costco fuel stations.,5980,204.789,357.363,0.0,14.768,48.28,216.663,2214.003,km
 station_class_count[treated],Count of stations classified as treated (within 5 km of one of the 4 treated Costcos),84,,,,,,,,stations
 station_class_count[donor_eligible],Count of stations classified as donor-eligible (>20 km from every Costco),3926,,,,,,,,stations

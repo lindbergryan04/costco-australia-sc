@@ -287,29 +287,6 @@ def main():
         body_style,
     ))
 
-    # ---- Outcome and treatment construction ----
-    story.append(Paragraph(
-        "Outcome and treatment construction", subsection_style))
-    story.append(Paragraph(
-        "Our main outcome is the monthly mean unleaded retail price "
-        "(cents per litre), constructed in Section 2 by filtering to "
-        "regular unleaded (FuelCode in {U91, E10, P91} for NSW; Fuel_Type "
-        "in {Unleaded 91, e10} for QLD; PRODUCT_DESCRIPTION = ULP for "
-        "WA) and aggregating in two stages: (station &times; month), "
-        "then across stations within the unit. The unit differs by "
-        "group: each <i>treated</i> unit is a (Costco &times; month) "
-        "cell averaging non-Costco stations within 5 km of one of the "
-        "four treated Costco coordinates; each <i>donor</i> unit is a "
-        "(postcode &times; month) cell averaging non-Costco stations "
-        "within the postcode. The treatment indicator (a per-Costco "
-        "binary post-opening flag) is constructed in "
-        "Section 2 by merging the hand-collected treatment-date table "
-        "onto the treated panel. The donor pool consists of postcodes "
-        "located more than 20 km from any Costco that also clear the "
-        "downstream coverage filters (Section 2(g)).",
-        body_style,
-    ))
-
     # ---- Summary statistics ----
     story.append(Paragraph(
         "Summary statistics, postcode-month analysis sample (3 states, "
@@ -389,23 +366,6 @@ def main():
         "cut, and remain elevated through 2026. State-level co-movement "
         "supports our use of within-state donor pools to absorb common "
         "national shocks.",
-        caption_style,
-    ))
-
-    # ---- Figure 3: distance-to-Costco distribution (independent variable) ----
-    story.append(Spacer(1, 6))
-    story.append(Image(f"{PLOTS_DIR}/03_distance_to_costco_hist.png",
-                       width=6.5 * inch, height=3.25 * inch))
-    story.append(Paragraph(
-        "<b>Figure 3.</b> Distribution of station distance to the "
-        "nearest Costco, split by classification. Vertical dotted lines "
-        "mark the 5&nbsp;km treated boundary and the 20&nbsp;km "
-        "donor-pool boundary; stations 5&ndash;20&nbsp;km from any "
-        "Costco are excluded from both groups to avoid spillover "
-        "contamination. The bulk of donor-eligible stations sit well "
-        "outside any plausible Costco competitive footprint, supporting "
-        "the donor pool&rsquo;s status as an untreated counterfactual. "
-        "Stations beyond 200&nbsp;km are truncated for readability.",
         caption_style,
     ))
 
@@ -489,16 +449,29 @@ def main():
     story.append(Image(f"{PLOTS_DIR}/05_treated_event_studies.png",
                        width=6.5 * inch, height=7.0 * inch))
     story.append(Paragraph(
-        "<b>Figure 4.</b> Treated-market mean unleaded price over time "
-        "for each of the four treated Costcos, with the vertical red "
-        "dashed line marking the validated treatment date "
-        "(Section 2(d)). Eyeballing pre-period trajectories before "
-        "fitting any model surfaces data-quality issues and high-leverage "
-        "points: Casuarina&rsquo;s sparse treated-station count (~3 "
-        "stations) shows up as month-to-month volatility that the other "
-        "three Costcos don&rsquo;t exhibit; Coomera&rsquo;s registry "
-        "coverage gradually builds up through 2018&ndash;2020 before "
-        "stabilizing.",
+        "<b>Figure 3.</b> Treated 5&nbsp;km ring mean unleaded price "
+        "(coloured solid) versus the state median across all reporting "
+        "postcodes (grey dashed) for each of the four treated Costcos. "
+        "The vertical red dashed line marks the validated treatment "
+        "date (Section 2(d)). Three shock annotations decode the "
+        "post-2020 surge: grey shading marks the COVID demand collapse "
+        "(Mar&ndash;Sep 2020); the dotted vertical line at 24 Feb 2022 "
+        "marks Russia&rsquo;s invasion of Ukraine; pale blue shading "
+        "marks the AU federal fuel-excise cut "
+        "(30 Mar&ndash;28 Sep 2022), a temporary halving of the "
+        "44.2&nbsp;&cent;/L fuel excise to 22.1&nbsp;&cent;/L announced "
+        "in the March 2022 budget as cost-of-living relief in response "
+        "to the post-invasion price spike. The state-median overlay "
+        "gives each panel a level reference: Perth Airport sits "
+        "modestly below the WA median, Coomera tracks the QLD median "
+        "closely, Lake Macquarie tracks NSW closely, and "
+        "Casuarina&rsquo;s sparse 5&nbsp;km ring (~3 contributing "
+        "stations) reads as month-to-month noise around its WA "
+        "median. Coomera&rsquo;s registry coverage gradually builds "
+        "up through 2018&ndash;2020 before stabilising. The state "
+        "median is a descriptive level reference only; it is not the "
+        "synthetic-control counterfactual, which is constructed in "
+        "Section 3 from a weighted subset of donor postcodes.",
         caption_style,
     ))
     story.append(Spacer(1, 6))
@@ -584,24 +557,6 @@ def main():
         "multiple fuel types. These are not duplicates; they are "
         "legitimate event-level records and are correctly aggregated to "
         "monthly means by the panel build.",
-        body_style,
-    ))
-
-    # ---- Contingencies ----
-    story.append(Paragraph("Contingencies", subsection_style))
-    story.append(Paragraph(
-        "If histograms of postcode-month unleaded prices reveal extreme "
-        "outliers in any donor postcode (e.g. a one-time data-entry "
-        "anomaly from a single station dominating a small postcode), "
-        "the panel is winsorised at the 1st and 99th percentile before "
-        "synthetic-control weight fitting. Postcode-months with fewer "
-        "than 3 contributing observations after the panel build are "
-        "flagged as missing, not retained at face value. If pre-period "
-        "fit quality for any treated Costco is demonstrably poor "
-        "(Section 3, visible mismatch between treated and synthetic in "
-        "the pre-period), that Costco is presented with a documented "
-        "limitation, not as a headline result; Casuarina is the most "
-        "likely candidate given its small treated-station count.",
         body_style,
     ))
 

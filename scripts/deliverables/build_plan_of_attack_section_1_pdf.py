@@ -113,7 +113,7 @@ def main():
         "hand-collected list of Costco fuel-station opening dates. The "
         "three registries together yield approximately 17.4 million "
         "station-day price records across 6,084 unique stations between "
-        "January 2018 and April 2026.",
+        "December 2016 and April 2026.",
         body_style,
     ))
 
@@ -331,9 +331,9 @@ def main():
         "Counts: 84 stations classified as treated (within 5 km of a "
         "treated Costco), 3,926 donor-eligible (>20 km from every "
         "Costco), 1,970 in the 5&ndash;20 km exclusion donut. The "
-        "17,953 postcode-month rows above are the donor candidate panel "
-        "before geographic and quality filters; the post-filter SC donor "
-        "pool is 17,578 cells (Section 2(g)).",
+        "17,953 postcode-month rows above are the SC analysis sample "
+        "(donor pool + treated 5 km rings); the donor pool alone is "
+        "17,578 cells (Section 2(g)).",
         caption_style,
     ))
 

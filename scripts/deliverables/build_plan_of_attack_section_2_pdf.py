@@ -223,7 +223,7 @@ def main():
         "<b>Treated-Costco inclusion rule.</b> A Costco fuel station is "
         "treated as a synthetic-control unit if and only if its registry "
         "history contains both <b>at least 24 pre-treatment months</b> "
-        "and <b>at least 6 post-treatment months</b> in the relevant "
+        "and <b>at least 12 post-treatment months</b> in the relevant "
         "state's price registry. Four of Australia's ten Costco fuel "
         "stations satisfy both conditions (Coomera, Casuarina, Perth "
         "Airport, Lake Macquarie); six do not, and appear as descriptive "
@@ -270,7 +270,7 @@ def main():
          Paragraph("Not relaxed (would re-introduce excluded Costcos that "
                    "fail the rule)", cell_small)],
         [Paragraph("Costco post-period", cell_small),
-         Paragraph("&ge;6 months", cell_small),
+         Paragraph("&ge;12 months", cell_small),
          Paragraph("Minimum to estimate a sustained-effect gap",
                    cell_small),
          Paragraph("Not relaxed", cell_small)],
@@ -594,7 +594,7 @@ def main():
          Paragraph("196 postcodes &times; ~90 months = 17,578 "
                    "(postcode &times; month) cells",
                    cell_small)],
-        [Paragraph("Costco eligibility (&ge;24 pre, &ge;6 post)",
+        [Paragraph("Costco eligibility (&ge;24 pre, &ge;12 post)",
                    cell_small),
          Paragraph("&minus;4 Costcos", cell_small_right),
          Paragraph("&minus;2 Costcos", cell_small_right),

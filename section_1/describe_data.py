@@ -478,10 +478,16 @@ Composite unique key: `(state, postcode, year, month)`.
 def write_summary_statistics(panel, classified):
     rows = []
 
-    # Outcome: postcode-month mean unleaded
-    prices = [r["mean_price_cents"] for r in panel]
+    # Outcome: postcode-month mean unleaded, restricted to the analysis sample
+    # (donor pool + treated rings) -- matches Section 1's Figure 1 and the
+    # PDF builder's summary-stats caption.
+    prices = load_sc_analysis_prices()
+    if not prices:
+        prices = [r["mean_price_cents"] for r in panel]
     rows.append(_stat_row("mean_unleaded_price_cents_per_L", prices,
-                          "Postcode-month mean unleaded price (¢/L). "
+                          "Postcode-month mean unleaded price (¢/L), "
+                          "restricted to the SC analysis sample "
+                          "(donor pool + treated 5 km rings). "
                           "Outcome variable for the synthetic-control analysis.",
                           unit="¢/L", n=len(prices)))
 
@@ -656,14 +662,36 @@ def write_data_quality_md(panel, classified, metas):
 # Phase E: plots
 # ----------------------------------------------------------------------------
 
+def load_sc_analysis_prices():
+    """Return the price observations that actually feed the synthetic-
+    control fit: donor-pool postcode-months plus treated 5 km-ring
+    Costco-months. This is the analysis-sample distribution Section 1's
+    Figure 1 and summary-stats table describe."""
+    prices = []
+    for path in ("australia/data/sc_inputs/donor_pool.csv",
+                 "australia/data/sc_inputs/treated_units.csv"):
+        try:
+            with open(path) as f:
+                for r in csv.DictReader(f):
+                    prices.append(float(r["mean_price_cents"]))
+        except FileNotFoundError:
+            print(f"  warning: {path} not found; analysis-sample stats "
+                  "will be incomplete")
+    return prices
+
+
 def plot_price_histogram(panel):
-    prices = [r["mean_price_cents"] for r in panel]
+    prices = load_sc_analysis_prices()
+    if not prices:
+        print("  warning: no SC analysis prices loaded, falling back to "
+              "full panel for histogram")
+        prices = [r["mean_price_cents"] for r in panel]
     fig, ax = plt.subplots(figsize=(10, 5))
     ax.hist(prices, bins=60, color="#1F77B4", edgecolor="white")
     ax.set_xlabel("Postcode-month mean unleaded price (¢/L)")
     ax.set_ylabel("Frequency (postcode-months)")
-    ax.set_title(f"Distribution of monthly mean unleaded price across the "
-                 f"postcode-month panel (n = {len(prices):,})")
+    ax.set_title(f"Distribution of monthly mean unleaded price, "
+                 f"analysis-ready panel (n = {len(prices):,})")
     ax.axvline(mean(prices), color="red", linestyle="--",
                label=f"mean = {mean(prices):.1f}¢/L")
     ax.axvline(sorted(prices)[len(prices)//2], color="orange",
@@ -677,7 +705,9 @@ def plot_price_histogram(panel):
     plt.close(fig)
 
 
-def plot_unleaded_median_over_time(panel):
+def compute_state_median_series(panel):
+    """Returns {state: [(date, median_price_cents), ...]} where the median
+    is taken across all postcodes in the state for each (year, month)."""
     by_state_month = defaultdict(list)
     for r in panel:
         by_state_month[(r["state"], r["year"], r["month"])].append(
@@ -687,6 +717,24 @@ def plot_unleaded_median_over_time(panel):
         d = dt.date(y, m, 15)
         med = sorted(prices)[len(prices)//2]
         series[state].append((d, med))
+    return series
+
+
+def write_state_median_csv(series):
+    """Side-artifact for downstream local plotting scripts that lack
+    access to the registry cache (e.g. regenerate_treated_event_studies_plot.py)."""
+    out = f"{OUT}/state_median_monthly.csv"
+    with open(out, "w", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(["state", "year", "month", "date", "median_price_cents"])
+        for state, points in sorted(series.items()):
+            for d, med in points:
+                w.writerow([state, d.year, d.month, d.isoformat(), f"{med:.2f}"])
+    print(f"  wrote {out}")
+
+
+def plot_unleaded_median_over_time(panel):
+    series = compute_state_median_series(panel)
     fig, ax = plt.subplots(figsize=(11, 5.5))
     palette = {"NSW": "#1F77B4", "QLD": "#FF7F0E", "WA": "#2CA02C"}
     for state, points in series.items():
@@ -775,14 +823,12 @@ def plot_classification_counts(classified):
     plt.close(fig)
 
 
-def plot_treated_event_studies(panel):
-    """One panel per treated Costco showing mean price across treated
-    postcodes over time. We approximate 'treated postcodes' as those that
-    survive the 5km filter near each Costco (equivalently, the postcodes
-    the treated stations live in). For the visualization we use the
-    treated_units.csv produced by Phase 5 if available, falling back to a
-    direct postcode lookup."""
-    # Use the existing treated_units.csv panel; it's already aggregated
+def plot_treated_event_studies(panel, state_median_series=None):
+    """One panel per treated Costco showing the treated 5km-ring mean
+    price overlaid against its state's monthly median (descriptive
+    level reference), with shock annotations (COVID demand collapse,
+    AU fuel-excise cut, Russia/Ukraine invasion) so the reader can
+    decode the post-2020 surge."""
     treated = []
     try:
         with open("australia/data/sc_inputs/treated_units.csv") as f:
@@ -795,10 +841,23 @@ def plot_treated_event_studies(panel):
     except FileNotFoundError:
         print("  warning: sc_inputs/treated_units.csv not found, skipping plot 05")
         return
+
+    if state_median_series is None:
+        state_median_series = compute_state_median_series(panel)
+
+    # Shock windows (Australian context)
+    covid_start  = dt.date(2020, 3, 1)
+    covid_end    = dt.date(2020, 9, 1)
+    excise_start = dt.date(2022, 3, 30)
+    excise_end   = dt.date(2022, 9, 28)
+    ukraine_date = dt.date(2022, 2, 24)
+
     fig, axes = plt.subplots(4, 1, figsize=(11, 12), sharex=True)
     palette = {"Coomera": "#1F77B4", "Casuarina": "#FF7F0E",
                "Perth Airport": "#2CA02C", "Lake Macquarie": "#D62728"}
     openings = {ck: op for cstate, ck, op, *_ in COSTCOS_TREATED}
+    costco_state = {ck: cstate for cstate, ck, op, *_ in COSTCOS_TREATED}
+
     for ax, ckey in zip(axes, ["Perth Airport", "Casuarina",
                                 "Lake Macquarie", "Coomera"]):
         rs = sorted([r for r in treated if r["costco_key"] == ckey],
@@ -806,20 +865,47 @@ def plot_treated_event_studies(panel):
         if not rs:
             ax.set_title(f"{ckey}: no data")
             continue
+
+        # Shock backgrounds (behind data lines).
+        # Grey = NBER-style recession shading (COVID demand collapse).
+        # Pale blue = policy-intervention shading (AU fuel-excise cut).
+        ax.axvspan(covid_start, covid_end, color="#BBBBBB", alpha=0.30,
+                   label="COVID demand collapse")
+        ax.axvspan(excise_start, excise_end, color="#9ECAE1", alpha=0.40,
+                   label="AU fuel-excise cut")
+        ax.axvline(ukraine_date, color="#444444", linestyle=":",
+                   linewidth=1.1, label="Russia/Ukraine (24 Feb 2022)")
+
+        # State median reference (descriptive level context)
+        state = costco_state[ckey]
+        s_points = state_median_series.get(state, [])
+        if s_points:
+            s_ds, s_ys = zip(*s_points)
+            ax.plot(s_ds, s_ys, color="#444444", linestyle="--",
+                    linewidth=1.1, alpha=0.75,
+                    label=f"{state} state median (all postcodes)")
+
+        # Treated mean (the primary series)
         ds = [r["date"] for r in rs]
         ys = [r["mean_price_cents"] for r in rs]
         ax.plot(ds, ys, color=palette[ckey], marker="o", markersize=3,
-                linewidth=1.3, label=f"Treated mean (5 km)")
+                linewidth=1.4, label="Treated mean (5 km)", zorder=3)
+
+        # Costco opening
         ax.axvline(openings[ckey], color="red", linestyle="--",
-                   label=f"opens {openings[ckey]}", linewidth=1)
+                   label=f"opens {openings[ckey]}", linewidth=1.2,
+                   zorder=4)
+
         ax.set_ylabel("¢/L")
-        ax.set_title(f"{ckey}: treated-market mean unleaded price")
-        ax.legend(loc="upper left", fontsize=9)
+        ax.set_title(f"{ckey}: treated 5 km ring vs. {state} state median")
+        ax.legend(loc="upper left", fontsize=7.5, ncol=2,
+                  framealpha=0.9)
         ax.grid(alpha=0.3)
         ax.xaxis.set_major_locator(YearLocator())
         ax.xaxis.set_major_formatter(DateFormatter("%Y"))
+
     axes[-1].set_xlabel("Date")
-    fig.suptitle("Treated-market unleaded price over time, per treated Costco",
+    fig.suptitle("Treated-market unleaded price vs. state median, per treated Costco",
                  fontsize=12, y=1.00)
     out = f"{OUT}/plots/05_treated_event_studies.png"
     fig.tight_layout()
@@ -861,13 +947,15 @@ def main():
     write_unit_of_observation_md()
     write_summary_statistics(panel, classified)
     write_data_quality_md(panel, classified, metas)
+    state_median = compute_state_median_series(panel)
+    write_state_median_csv(state_median)
     print()
 
     print("Phase E: rendering plots...")
     plot_price_histogram(panel)
     plot_unleaded_median_over_time(panel)
     plot_distance_to_costco_hist(classified)
-    plot_treated_event_studies(panel)
+    plot_treated_event_studies(panel, state_median_series=state_median)
     print()
 
     print("Section 1 artifacts ready in australia/section_1/.")

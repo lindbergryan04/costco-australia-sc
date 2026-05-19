@@ -36,10 +36,28 @@ month_anchor <- function(d) {
 # trajectory, while keeping the spec compact.
 #
 # Returns a tidysynth object compatible with grab_* extractors.
+#
+# Optional `fit_end_date` shortens the predictor / weight-optimization
+# window (used by §4 Robustness Check 5: fit on pre-period minus the
+# last 12 months, then score the synthetic on the untouched 12-month
+# holdout). When NULL the function behaves identically to the headline
+# spec, so cached fits in §3 are unaffected by this argument's addition.
+#
+# `predictors` chooses the matching predictor set. The default
+# "yearly_means" (one predictor per pre-period calendar year) is what
+# §3 uses; "overall_mean" uses a single pre-period mean instead and is
+# needed when the fit window is short enough that adjacent yearly
+# means become near-collinear (the QP solver in kernlab::ipop returns
+# a singular-matrix error in that case). §4 RC1 (placebo in time)
+# and RC5 (12-month holdout) both shorten the window.
 fit_one_costco <- function(treated_units, donor_pool, costco_name,
-                           treatment_date, state) {
+                           treatment_date, state, fit_end_date = NULL,
+                           predictors = c("yearly_means", "overall_mean")) {
 
+  predictors <- match.arg(predictors)
   treatment_month <- month_anchor(treatment_date)
+  fit_end_month   <- if (is.null(fit_end_date)) treatment_month
+                     else month_anchor(fit_end_date)
 
   # Treated unit: drop any NA-outcome months entirely (e.g. Lake
   # Macquarie's intermittent gaps). The non-NA treated months define
@@ -57,7 +75,7 @@ fit_one_costco <- function(treated_units, donor_pool, costco_name,
   }
 
   treated_dates <- treated_focal |> pull(time) |> unique() |> sort()
-  pre_dates     <- treated_dates[treated_dates < treatment_month]
+  pre_dates     <- treated_dates[treated_dates < fit_end_month]
 
   # Donors: restrict to the treated time grid, then keep only donors
   # with non-NA outcomes at *every* treated-grid date (pre AND post).
@@ -101,19 +119,55 @@ fit_one_costco <- function(treated_units, donor_pool, costco_name,
       generate_placebos = TRUE
     )
 
-  for (yr in pre_years) {
-    yr_window <- pre_dates[year(pre_dates) == yr]
-    pred_name <- paste0("mean_", yr)
+  if (predictors == "yearly_means") {
+    for (yr in pre_years) {
+      yr_window <- pre_dates[year(pre_dates) == yr]
+      pred_name <- paste0("mean_", yr)
+      spec <- spec |>
+        generate_predictor(
+          time_window = yr_window,
+          !!pred_name := mean(outcome, na.rm = TRUE)
+        )
+    }
+  } else {
+    # Single pre-period mean. Robust to short fit windows where adjacent
+    # yearly means become near-collinear.
     spec <- spec |>
       generate_predictor(
-        time_window = yr_window,
-        !!pred_name := mean(outcome, na.rm = TRUE)
+        time_window = pre_dates,
+        mean_pre := mean(outcome, na.rm = TRUE)
       )
   }
 
   spec |>
     generate_weights(optimization_window = pre_dates) |>
     generate_control()
+}
+
+# Robust wrapper around fit_one_costco. Tries the headline `yearly_means`
+# predictor strategy first; on a singular-matrix error from kernlab::ipop
+# (a recurring issue for alt-radius panels with sparse WA donors or
+# truncated pre-periods) falls back to the single `overall_mean`
+# predictor. Returns NULL if both strategies fail. Used by every §4
+# robustness check so a single fit's collinearity issue doesn't drop a
+# whole table.
+fit_one_costco_robust <- function(treated_units, donor_pool, costco_name,
+                                  treatment_date, state,
+                                  fit_end_date = NULL) {
+  last_err <- NULL
+  for (strat in c("yearly_means", "overall_mean")) {
+    res <- tryCatch(
+      fit_one_costco(treated_units, donor_pool, costco_name,
+                     treatment_date, state, fit_end_date,
+                     predictors = strat),
+      error = function(e) e
+    )
+    if (!inherits(res, "error")) return(res)
+    last_err <- res
+  }
+  warning(sprintf("All predictor strategies failed for %s: %s",
+                  costco_name, conditionMessage(last_err)))
+  NULL
 }
 
 # ---- Extractors --------------------------------------------------------------

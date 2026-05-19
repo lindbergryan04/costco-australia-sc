@@ -1,0 +1,5 @@
+costco_key,state,lat,lng,treatment_date,n_pre_months,n_post_months,avg_n_unique_stations
+Coomera,QLD,-27.850829,153.314369,2023-05-23,51,31,74.04
+Casuarina,WA,-32.233481,115.853714,2022-11-11,58,42,65.83
+Perth Airport,WA,-31.940377,115.951869,2020-04-11,27,73,124.76
+Lake Macquarie,NSW,-32.946111,151.628054,2022-05-02,58,35,44.84

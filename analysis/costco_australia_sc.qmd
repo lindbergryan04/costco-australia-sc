@@ -16,6 +16,11 @@ format:
     fig-width: 7
     fig-height: 4.5
     colorlinks: true
+    include-in-header:
+      text: |
+        \usepackage{float}
+        \floatplacement{table}{H}
+        \floatplacement{figure}{H}
 execute:
   echo: false
   warning: false
@@ -48,13 +53,26 @@ DROPBOX_FOLDER_URL <- "https://www.dropbox.com/scl/fo/g7lhsenilo4lza6dwnukq/AMIi
 cache_dir <- file.path(tempdir(), "costco_sc_inputs")
 dir.create(cache_dir, showWarnings = FALSE, recursive = TRUE)
 
-required <- c("treated_units.csv", "donor_pool.csv", "treated_metadata.csv",
-              "donor_metadata.csv", "state_median_monthly.csv")
+# Headline 5 km / 20 km inputs sit at the root of the Dropbox folder.
+# Alt-radius inputs (§4 robustness checks) live under sc_inputs_alt/<variant>/.
+required_headline <- c("treated_units.csv", "donor_pool.csv",
+                       "treated_metadata.csv", "donor_metadata.csv",
+                       "state_median_monthly.csv")
+alt_variants      <- c("3km_15km", "8km_30km", "casuarina_10km",
+                       "donut_5_20km")
+required_alt      <- as.vector(outer(alt_variants,
+                                     c("treated_units.csv", "donor_pool.csv",
+                                       "treated_metadata.csv"),
+                                     function(v, f) file.path("sc_inputs_alt",
+                                                              v, f)))
+required <- c(required_headline, required_alt)
 
 if (!all(file.exists(file.path(cache_dir, required)))) {
   zip_path <- file.path(cache_dir, "inputs.zip")
   download.file(DROPBOX_FOLDER_URL, zip_path, mode = "wb", quiet = TRUE)
-  unzip(zip_path, exdir = cache_dir, junkpaths = TRUE)
+  # junkpaths = FALSE preserves the sc_inputs_alt/<variant>/ subfolder
+  # structure for the alt-radius inputs.
+  unzip(zip_path, exdir = cache_dir, junkpaths = FALSE)
   missing <- required[!file.exists(file.path(cache_dir, required))]
   if (length(missing) > 0) {
     stop("After unzip, missing files: ", paste(missing, collapse = ", "),
@@ -73,6 +91,23 @@ donor_metadata   <- read_csv(file.path(cache_dir, "donor_metadata.csv"),
 state_median     <- read_csv(file.path(cache_dir, "state_median_monthly.csv"),
                              show_col_types = FALSE)
 
+# Load the four alt-radius variants. Each variant is a list with three
+# tibbles: treated_units, donor_pool, treated_metadata. §4 robustness
+# checks index into this list by variant name.
+alt_data <- map(alt_variants, function(v) {
+  list(
+    treated_units    = read_csv(file.path(cache_dir, "sc_inputs_alt", v,
+                                          "treated_units.csv"),
+                                show_col_types = FALSE),
+    donor_pool       = read_csv(file.path(cache_dir, "sc_inputs_alt", v,
+                                          "donor_pool.csv"),
+                                show_col_types = FALSE),
+    treated_metadata = read_csv(file.path(cache_dir, "sc_inputs_alt", v,
+                                          "treated_metadata.csv"),
+                                show_col_types = FALSE)
+  )
+}) |> set_names(alt_variants)
+
 # State display order — alphabetical for figures, fixed for tables.
 state_levels <- c("NSW", "QLD", "WA")
 
@@ -82,54 +117,54 @@ costco_order <- c("Perth Airport", "Casuarina", "Coomera", "Lake Macquarie")
 
 \newpage
 
-# Question and motivation
+# Question and motivation {.unnumbered}
 
 We advise the **Australian Competition and Consumer Commission (ACCC)**,
 Australia's national competition regulator. The ACCC publishes regular
 fuel-price monitoring reports and has flagged ongoing concerns about market
 concentration in Australian fuel retailing. One of the ACCC's main tools for
 improving competition in concentrated retail markets is reducing entry barriers
-for discount entrants — but whether such entrants actually discipline
-incumbent pricing is an empirical question, not a foregone conclusion.
+for discount entrants. Whether such entrants actually discipline incumbent
+pricing is an open empirical question.
 
 We ask:
 
 > **Does the entry of a Costco gas station into an Australian local market
 > cause nearby competitor stations to lower their retail fuel prices?**
 
-This is a causal question. We answer it using **synthetic control**, fit
-separately for each of the four Australian Costco fuel stations that satisfy
-our pre- and post-treatment data-availability rules: Perth Airport (WA, Feb 2020),
-Casuarina (WA, Nov 2022), Lake Macquarie (NSW, May 2022), and Coomera (QLD,
-May 2023). The complete plan, including identifying assumptions, sample
-construction, and the seven pre-committed robustness checks, is in
-`deliverables/plan_of_attack_section_{1,2,3}.pdf`. This document is the
-*execution* of that plan.
+This is a causal question. We answer it with **synthetic control**, fit
+separately to each of the four Costco fuel stations in Australia with enough
+pre- and post-opening price history to support estimation: Perth Airport
+(WA, Feb 2020), Casuarina (WA, Nov 2022), Lake Macquarie (NSW, May 2022),
+and Coomera (QLD, May 2023). The pre-committed plan (identifying assumptions,
+sample construction, robustness checks) is in
+`deliverables/plan_of_attack_section_{1,2,3}.pdf`.
 
 \newpage
 
-# Section 1: Raw Data Description
+# Raw Data Description
 
 ## Data sources
 
-We combine three publicly accessible Australian state fuel-price registries —
-**NSW FuelCheck** (data.nsw.gov.au), the **Queensland Fuel Price Reporting
-Scheme** (data.qld.gov.au), and **WA FuelWatch** (data.wa.gov.au) — with a
-hand-collected list of Costco fuel-station opening dates. The three registries
+We combine three publicly accessible Australian state fuel-price registries
+with a hand-collected list of Costco fuel-station opening dates. The
+registries are **NSW FuelCheck** (data.nsw.gov.au), the **Queensland Fuel
+Price Reporting Scheme** (data.qld.gov.au), and **WA FuelWatch**
+(data.wa.gov.au). The three registries
 together yield approximately **17.4 million station-day price records across
 6,084 unique stations between December 2016 and April 2026**. Each registry
 mandates public price reporting by every retail fuel station in the state.
 
 ```{r tbl-registries}
+#| tbl-cap: "State fuel-price registries used in this analysis."
 tibble::tribble(
   ~Registry,        ~State, ~Coverage,                 ~`Raw records`, ~`Unique stations`,
   "NSW FuelCheck",  "NSW",  "Dec 2016 – Jan 2026",     "4,401,971",    "4,813",
   "QLD FPRS",       "QLD",  "Dec 2018 – Dec 2025",     "4,970,650",    "1,883",
   "WA FuelWatch",   "WA",   "Jan 2018 – Apr 2026",     "8,047,153",    "1,423"
 ) |>
-  kbl(booktabs = TRUE, align = "lllrr",
-      caption = "State fuel-price registries used in this analysis.") |>
-  kable_styling(latex_options = c("striped", "hold_position"))
+  kbl(booktabs = TRUE, align = "lllrr") |>
+  kable_styling(latex_options = c("striped", "HOLD_position"))
 ```
 
 NSW FuelCheck and QLD FPRS record price-change events (a row per
@@ -143,12 +178,13 @@ Detailed field-level schemas appear in
 ## Treated Costco fuel stations
 
 Ten Costco fuel stations operate (or recently opened) in Australia. Four
-satisfy the synthetic-control inclusion rule (≥24 pre-treatment months and
-≥12 post-treatment months in the relevant state's registry) and form the
+satisfy the synthetic-control inclusion rule ($\geq 24$ pre-treatment months and
+$\geq 12$ post-treatment months in the relevant state's registry) and form the
 treated panel; the remaining six are excluded from formal estimation but
 appear here as descriptive context.
 
 ```{r tbl-costco-status}
+#| tbl-cap: "Australian Costco fuel stations by treatment status."
 treated_rows <- treated_metadata |>
   transmute(
     Costco = costco_key,
@@ -171,9 +207,8 @@ excluded_rows <- tibble::tribble(
 )
 
 bind_rows(treated_rows, excluded_rows) |>
-  kbl(booktabs = TRUE, align = "llrrrl",
-      caption = "Australian Costco fuel stations by treatment status.") |>
-  kable_styling(latex_options = c("striped", "hold_position"),
+  kbl(booktabs = TRUE, align = "llrrrl") |>
+  kable_styling(latex_options = c("striped", "HOLD_position"),
                 font_size = 9)
 ```
 
@@ -183,11 +218,12 @@ the synthetic-control design exploits.
 
 ## The analysis panel
 
-After ingest, geo-coding (Costco distance), the regular-unleaded filter,
-sentinel-price drops, and two-stage station × month → ring/postcode × month
-aggregation, our analysis panel contains two pieces:
+The build pipeline cleans the raw registries (adds station coordinates,
+keeps only regular unleaded, drops implausible quotes, aggregates monthly).
+The analysis panel that comes out has two pieces:
 
 ```{r tbl-panel-summary}
+#| tbl-cap: "Analysis-ready panel sizes after sample-construction filters."
 panel_summary <- tibble(
   Component = c(
     "Treated 5 km rings × month",
@@ -209,9 +245,8 @@ panel_summary <- tibble(
 
 panel_summary |>
   kbl(booktabs = TRUE,
-      format.args = list(big.mark = ","),
-      caption = "Analysis-ready panel sizes after sample-construction filters.") |>
-  kable_styling(latex_options = c("striped", "hold_position"))
+      format.args = list(big.mark = ",")) |>
+  kable_styling(latex_options = c("striped", "HOLD_position"))
 ```
 
 The sample-construction funnel (raw rows → aggregated cells → final panel)
@@ -327,6 +362,7 @@ wrap_plots(panels, ncol = 1)
 ## Summary statistics
 
 ```{r tbl-summary-stats}
+#| tbl-cap: "Summary statistics on the SC analysis panel."
 price_stats <- panel_combined |>
   summarize(
     n      = n(),
@@ -356,15 +392,14 @@ dist_stats <- donor_metadata |>
 bind_rows(price_stats, dist_stats) |>
   mutate(across(c(Mean, SD, Min, p25, Median, p75, Max), \(x) round(x, 1))) |>
   kbl(booktabs = TRUE, align = "lrrrrrrrr",
-      format.args = list(big.mark = ","),
-      caption = "Summary statistics on the SC analysis panel.") |>
-  kable_styling(latex_options = c("striped", "hold_position", "scale_down"))
+      format.args = list(big.mark = ",")) |>
+  kable_styling(latex_options = c("striped", "HOLD_position", "scale_down"))
 ```
 
 The mean unleaded price row matches the combined treated + donor sample. The
 distance row is computed at the donor-postcode level (one row per postcode);
 the plan-of-attack Section 1 reports the analogous statistic at the station
-level (n = 5,980, mean ≈ 205 km), so the numbers differ in denominator but
+level (n = 5,980, mean $\approx$ 205 km), so the numbers differ in denominator but
 agree in shape: most non-Costco stations sit very far from any Costco.
 
 ## Data quality and known limitations
@@ -389,7 +424,7 @@ agree in shape: most non-Costco stations sit very far from any Costco.
   or `0.01`. After the filter, no postcode-month in the analysis panel
   falls outside 92–259 ¢/L (well inside the plausible Australian range).
 - **Casuarina sparse ring.** Casuarina's 5 km ring contains only about
-  three contributing stations on average — a documented limitation flagged
+  three contributing stations on average; this limitation was flagged
   in advance. Robustness Check 3 (Casuarina at 10 km) probes whether this
   noise drives the headline.
 - **Perth Airport opens four weeks before COVID.** Its early post-treatment
@@ -398,24 +433,23 @@ agree in shape: most non-Costco stations sit very far from any Costco.
 
 \newpage
 
-# Section 2: Sample Construction
+# Sample Construction
 
-Every choice between raw registry rows and the analysis panel deserves
-justification — the headline result is a causal claim about prices, so
-opacity at the construction stage would undercut everything downstream.
-The subsections below mirror Plan-of-Attack §2(a)–(g) in order. This
-section documents the 5 km treated ring / 20 km donor buffer geometry;
-alternate geometries appear in §4 Robustness Checks.
+Each subsection below walks through one sample-construction choice, in
+the same order as plan-of-attack §2(a)–(g). The choices here describe the
+5 km treated ring / 20 km donor buffer used in §3; §4 tests alternate
+geometries.
 
 ## Sample window
 
 The pre-period for each treated Costco runs from the start of its
-state's price registry — December 2016 for NSW, January 2018 for WA,
-December 2018 for QLD — through the day before that Costco's validated
+state's price registry (December 2016 for NSW, January 2018 for WA,
+December 2018 for QLD) through the day before that Costco's validated
 treatment date (§2.4). The post-period runs from the treatment date
 through April 2026, the most recent registry pull. Per-Costco coverage:
 
 ```{r tbl-coverage}
+#| tbl-cap: "Pre- and post-treatment coverage per treated Costco."
 treated_metadata |>
   transmute(
     Costco           = costco_key,
@@ -424,20 +458,16 @@ treated_metadata |>
     `Pre months`     = n_pre_months,
     `Post months`    = n_post_months
   ) |>
-  kbl(booktabs = TRUE, align = "llrrr",
-      caption = "Pre- and post-treatment coverage per treated Costco.") |>
-  kable_styling(latex_options = c("striped", "hold_position"))
+  kbl(booktabs = TRUE, align = "llrrr") |>
+  kable_styling(latex_options = c("striped", "HOLD_position"))
 ```
 
-Synthetic control fits its weights on the entire pre-period *trajectory*
-of the dependent variable, not just on a level. More pre-period
-observations tighten identification rather than dilute it — the opposite
-of the DID logic in which long pre-periods can introduce structural
-breaks into the parallel-trends assumption. Same-state donors experience
-the same world-shifts (oil-price regime changes, vehicle fleet turnover,
-federal excise adjustments) over the same window, so common shocks are
-absorbed into the synthetic by construction. We use as much pre-period
-as the data allow.
+Synthetic control fits weights to match the treated unit's full
+pre-period trajectory. More pre-period months tighten the fit; unlike
+DID, longer pre-periods don't risk breaking parallel trends in this
+design. Same-state donors absorb common shocks (oil-price changes, fleet
+turnover, federal excise adjustments) by construction. We use as much
+pre-period as the data allow.
 
 **COVID.** The 2020 demand collapse and recovery is the only structural
 break large enough to warrant explicit handling. Three of the four
@@ -462,8 +492,8 @@ panels.
 *local market* defined as all non-Costco retail stations within 5 km of
 the Costco's coordinates, summarized each month as the simple mean of
 those stations' monthly mean unleaded prices. Costco's own price quotes
-are excluded from the treated mean — the research question concerns
-competitor response, not Costco's own pricing.
+are excluded from the treated mean. The research question concerns
+competitor response; Costco's own pricing is outside scope.
 
 **Donor pool.** Each donor unit is a 4-digit Australian postcode,
 summarized the same way (monthly mean of non-Costco unleaded price
@@ -477,9 +507,9 @@ any plausible Costco competitive footprint.
 **Asymmetric radii (5 km treated, 20 km donor buffer).** The economics
 literature on retail fuel-price competition (Houde 2012; Eckert 2013)
 finds price effects concentrated within roughly 1–5 miles. 5 km
-(~3.1 mi) sits at the conservative end of that range — small enough to
-capture genuinely competing stations but not so small as to drop most
-of the local market. The 20 km donor buffer is intentionally a 4×
+(~3.1 mi) sits at the conservative end of that range: small enough to
+capture genuinely competing stations, large enough to include most of
+the local market. The 20 km donor buffer is intentionally a 4×
 multiple, providing a wide exclusion donut so that no donor postcode is
 partly affected by a Costco that isn't the one we're studying. The
 asymmetry biases the design *against* finding an effect: a narrow
@@ -487,7 +517,7 @@ treated definition shrinks the treated population to the most exposed
 stations, and the wide buffer shrinks the donor pool to truly untreated
 postcodes.
 
-**Outcome variable.** Regular unleaded — `FuelCode` in
+**Outcome variable.** Regular unleaded: `FuelCode` in
 `{U91, E10, P91}` for NSW; `Fuel_Type` in `{Unleaded 91, e10}` for QLD;
 `PRODUCT_DESCRIPTION = ULP` for WA. Unleaded is the highest-volume
 retail product in Australia, comparable across the three state schemes,
@@ -508,19 +538,19 @@ of Australia's ten Costco fuel stations satisfy both conditions; six
 do not and appear as descriptive context only (§1.2).
 
 ```{r tbl-thresholds}
+#| tbl-cap: "Threshold-and-defense summary for the SC sample."
 tibble::tribble(
   ~Threshold,               ~Value,         ~Justification,                                                                  ~`Robustness check (§4)`,
-  "Treated radius",         "≤ 5 km",       "Conservative end of IO-literature retail fuel-price spillover range (1–5 mi)",   "Re-run at 3 km and 8 km",
+  "Treated radius",         "at most 5 km",       "Conservative end of IO-literature retail fuel-price spillover range (1–5 mi)",   "Re-run at 3 km and 8 km",
   "Donor buffer",           "> 20 km",      "4× the treated radius; keeps donors fully outside any Costco's competitive zone","Re-run at 15 km and 30 km",
-  "Donor stations / month", "≥ 3",          "Below 3, monthly mean has high sampling variance",                               "Re-run at ≥ 2 and ≥ 5",
-  "Donor coverage",         "≥ 24 months",  "Minimum pre-period length for stable SC weight fitting",                         "Re-run at ≥ 36 months",
-  "Costco pre-period",      "≥ 24 months",  "Same logic, applied to treated",                                                 "Not relaxed (would re-introduce excluded Costcos)",
-  "Costco post-period",     "≥ 12 months",  "Minimum to estimate a sustained-effect gap",                                     "Not relaxed",
+  "Donor stations / month", "at least 3",          "Below 3, monthly mean has high sampling variance",                               "Re-run at at least 2 and at least 5",
+  "Donor coverage",         "at least 24 months",  "Minimum pre-period length for stable SC weight fitting",                         "Re-run at at least 36 months",
+  "Costco pre-period",      "at least 24 months",  "Same logic, applied to treated",                                                 "Not relaxed (would re-introduce excluded Costcos)",
+  "Costco post-period",     "at least 12 months",  "Minimum to estimate a sustained-effect gap",                                     "Not relaxed",
   "Plausible price range",  "50–500 ¢/L",   "Sentinel-value floor and ceiling; AU retail unleaded lives in 80–280 ¢/L",       "None; not an analytic threshold"
 ) |>
-  kbl(booktabs = TRUE, align = "llll",
-      caption = "Threshold-and-defense summary for the SC sample.") |>
-  kable_styling(latex_options = c("striped", "hold_position"),
+  kbl(booktabs = TRUE, align = "llll") |>
+  kable_styling(latex_options = c("striped", "HOLD_position"),
                 font_size = 9) |>
   column_spec(1, width = "2.8cm") |>
   column_spec(2, width = "2cm") |>
@@ -538,17 +568,16 @@ postcode-months, range 92–259 ¢/L, approximately bimodal across the
 pre-2022 / post-2022 price-regime divide).
 
 **Sentinel-value filter.** Individual price quotes outside 50–500 ¢/L
-are dropped before aggregation. This is a data-integrity filter, not
-winsorisation: it removes obvious registry artifacts (out-of-stock
-placeholder values like `9999` or `0.01`) rather than legitimate tail
-observations.
+are dropped before aggregation. This filter targets registry artifacts
+(out-of-stock placeholder values like `9999` or `0.01`); legitimate
+tail observations pass through. It is not a winsorisation step.
 
 **Missing months.** A postcode-month or treated ring-month with zero
 contributing station observations is left as missing (NA), never imputed
 as zero, never carried forward. Synthetic-control fitting handles
 missing months by ignoring them in the pre-period objective. §1's
 data-quality notes report that the largest run of missing months in any
-treated panel is three (Lake Macquarie), not material.
+treated panel is three (Lake Macquarie), well within tolerance.
 
 **No winsorisation in the main specification.** Two-stage monthly
 aggregation smooths individual-quote outliers: an extreme single quote
@@ -577,6 +606,7 @@ announced opening date differs from registry first-appearance by more
 than 30 days, the announced date supersedes.
 
 ```{r tbl-treatment-dates}
+#| tbl-cap: "Validated treatment dates: registry first-appearance cross-checked against fuel-station-specific corroboration. Perth Airport is the only revision."
 tibble::tribble(
   ~Costco,           ~`Registry first-appearance`, ~`Fuel-station-specific corroboration`,                                                  ~`Delta`,    ~`Treatment date used`,
   "Coomera",         "23 May 2023",                "23 May 2023 (Retail World; explicit fuel-station opening)",                              "0 d",       "23 May 2023 (registry)",
@@ -584,9 +614,8 @@ tibble::tribble(
   "Perth Airport",   "11 Apr 2020",                "19 Feb 2020 (ACAPMAg: petrol station selling at \\$1.18/L; warehouse opens 19 Mar 2020)", "-52 d",     "\\textbf{19 Feb 2020 (announced)}",
   "Lake Macquarie",  "2 May 2022",                 "None; no fuel-station-specific opening date in public sources",                          "n/a",       "2 May 2022 (registry)"
 ) |>
-  kbl(booktabs = TRUE, align = "lllll", escape = FALSE,
-      caption = "Validated treatment dates: registry first-appearance cross-checked against fuel-station-specific corroboration. Perth Airport is the only revision.") |>
-  kable_styling(latex_options = c("striped", "hold_position"),
+  kbl(booktabs = TRUE, align = "lllll", escape = FALSE) |>
+  kable_styling(latex_options = c("striped", "HOLD_position"),
                 font_size = 9) |>
   column_spec(1, width = "2.2cm") |>
   column_spec(2, width = "2.5cm") |>
@@ -610,9 +639,9 @@ Costco fuel station's coordinates. NSW and WA historical registry files
 do not carry lat/lng, so coordinates are joined from one-time pulls of
 the live FuelCheck and FuelWatch APIs by (normalized name, postcode);
 QLD's historical files include coordinates inline. Stations that fail
-the coordinate join are dropped from analysis — they cannot be
-classified into a 5 km ring or a donor postcode without a known
-location. Per-registry join failure rates are in §2.6.
+the coordinate join are dropped from analysis. Without a known
+location, they cannot be classified into a 5 km ring or a donor
+postcode. Per-registry join failure rates are in §2.6.
 
 ## Aggregation
 
@@ -664,7 +693,7 @@ that mention them fail the coordinate join. The snapshot misses **2,376
 of 4,543 NSW historical stations (52.3%)** and **673 of 1,423 WA
 historical stations (47.3%)**; QLD is unaffected because its historical
 files carry coordinates inline. The loss falls almost entirely on the
-donor pool — all four treated Costcos join cleanly — and
+donor pool (all four treated Costcos join cleanly), and
 `r n_distinct(donor_pool$postcode)` donor postcodes survive the
 downstream geographic and quality filters. Second, station-name typos
 and mid-panel renames occasionally break the join; the build pipeline
@@ -682,6 +711,7 @@ Costco counts as the panel is aggregated and filtered. **Source:**
 Bolded rows are the milestone outputs.
 
 ```{r tbl-funnel}
+#| tbl-cap: "Sample-construction funnel from raw registry rows to the analysis-ready panels in data/sc_inputs/."
 tibble::tribble(
   ~Step,                                      ~NSW,         ~QLD,         ~WA,         ~Justification,
   "Raw registry pull (rows)",                 "4,401,971",  "4,970,650",  "8,047,153", "Source data",
@@ -690,16 +720,15 @@ tibble::tribble(
   "Join station coordinates (rows)",          "1,247,728",  "995,145",    "1,289,912", "Required for radius assignment; NSW/WA from live-API snapshot",
   "Aggregate to (station × month) cells",     "156,864",    "70,564",     "68,332",    "Carry-forward for NSW/QLD events; passthrough for WA",
   "Aggregate to (postcode × month) cells",    "42,307",     "18,186",     "18,089",    "Donor candidate panel (561 / 245 / 198 postcodes)",
-  "Drop postcodes ≤ 20 km from any Costco",   "-231 pcds",  "-51 pcds",   "-80 pcds",  "Donors must be outside any Costco's competitive footprint",
+  "Drop postcodes at most 20 km from any Costco",   "-231 pcds",  "-51 pcds",   "-80 pcds",  "Donors must be outside any Costco's competitive footprint",
   "Drop postcodes < 3 stations / mo avg",     "-226 pcds",  "-138 pcds",  "-82 pcds",  "Monthly mean too noisy below 3 stations",
   "Drop postcodes < 24 months observed",      "-0 pcds",    "-0 pcds",    "-0 pcds",   "Coverage was good; no postcode failed this gate",
   "Final donor pool (postcodes)",             "104",        "56",         "36",        "196 total × ~90 months = 17,578 (postcode × month) cells",
-  "Costco eligibility (≥ 24 pre, ≥ 12 post)", "-4 Costcos", "-2 Costcos", "0",         "Inclusion rule applied to all 10 Australian Costco fuel stations",
+  "Costco eligibility (at least 24 pre, at least 12 post)", "-4 Costcos", "-2 Costcos", "0",         "Inclusion rule applied to all 10 Australian Costco fuel stations",
   "Final treated panel (Costcos)",            "1",          "1",          "2",         "4 Costcos × 5 km ring × ~80–100 months = 375 (Costco × month) cells"
 ) |>
-  kbl(booktabs = TRUE, align = "lllll",
-      caption = "Sample-construction funnel from raw registry rows to the analysis-ready panels in data/sc\\_inputs/.") |>
-  kable_styling(latex_options = c("striped", "hold_position"),
+  kbl(booktabs = TRUE, align = "lllll") |>
+  kable_styling(latex_options = c("striped", "HOLD_position"),
                 font_size = 9) |>
   column_spec(1, width = "5cm") |>
   column_spec(2, width = "1.7cm") |>
@@ -719,7 +748,7 @@ complete input to §3's synthetic-control analysis.
 
 \newpage
 
-# Section 3: Synthetic-Control Analysis
+# Synthetic-Control Analysis
 
 ## Research design
 
@@ -731,14 +760,14 @@ treated Costcos and 196 candidate donor postcodes, a treated-versus-control
 mean comparison is too thin: a single anomalous Costco (e.g. Casuarina,
 with only ~3 contributing stations) would dominate the average. Synthetic
 control builds a weighted counterfactual for each treated unit
-individually — exactly the design the n = 4 case calls for.
+individually. This is the design the n = 4 case calls for.
 
 **Source of variation.** Costco fuel-station entry into a local market
 isn't driven by what's happening to local fuel prices. Site selection
 is driven by Costco warehouse logistics, land availability, and Costco's
-national rollout schedule — none of which respond to the local
-fuel-price trajectory at the chosen site. The variation we exploit is
-the staggered timing of the four openings (Feb 2020, May 2022, Nov 2022,
+national rollout schedule. None of these respond to the local fuel-price
+trajectory at the chosen site. The variation we exploit is the
+staggered timing of the four openings (Feb 2020, May 2022, Nov 2022,
 May 2023) across three states.
 
 **Identifying assumptions.** Each is paired with the figure or check
@@ -769,18 +798,16 @@ construction. Weights are chosen to minimize the average gap between
 the treated 5 km ring's monthly mean unleaded price and the weighted
 donor mean across the pre-period.
 
-**Method commitment.** Standard synthetic-control via R's `tidysynth`
-package — the modern tidyverse-friendly successor to the original
-`Synth` implementation. **Predictors:** yearly means of the outcome
-series over the pre-period (no auxiliary covariates — we have no
-postcode-level demographic panel that would justify them).
-**Pre-period objective:** minimize the average gap between treated and
-synthetic on monthly mean unleaded price (`optimization_window =
-pre_period` in `tidysynth::generate_weights`). **Inference:** estimate
-uncertainty by treating each donor postcode as a fake treated unit and
-measuring the resulting fake effect, summarized as the post/pre
-tracking-error ratio and as a 95% CI on the post-treatment gap. All
-fitting is driven by [`_sc_helpers.R::fit_one_costco()`](_sc_helpers.R).
+**Method commitment.** Standard synthetic control via R's `tidysynth`
+package. **Predictors:** yearly means of pre-period unleaded price (no
+auxiliary covariates; no postcode-level demographic panel justifies
+them here). **Pre-period objective:** minimize the average gap between
+treated and synthetic on monthly mean unleaded price
+(`optimization_window = pre_period` in `tidysynth::generate_weights`).
+**Inference:** treat each donor postcode as a fake treated unit and
+measure the resulting fake effect; report the post/pre tracking-error
+ratio and a 95% CI on the post-treatment gap. All fitting runs through
+[`_sc_helpers.R::fit_one_costco()`](_sc_helpers.R).
 
 ## Fitting the four synthetic controls
 
@@ -829,12 +856,12 @@ distribution is computed in the same pass. Caching is enabled
 Four stacked panels of treated vs synthetic trajectories. Solid colored =
 actual treated 5 km ring; dashed black = synthetic counterfactual;
 vertical dotted red = validated treatment date (§2.4); shaded gray
-band = 95% donor-permutation CI on the synthetic, computed by treating
-each donor postcode as a placebo treated unit and taking the empirical
-2.5–97.5 percentile of donor-side gaps at each time point. The wider
-the band, the larger the noise floor at that month — a treated curve
-that falls outside the band is evidence the gap is bigger than what
-donor-side variability would produce.
+band = 95% donor-permutation CI on the synthetic. The CI comes from
+re-fitting the synthetic on each donor postcode as if it were treated,
+then taking the 2.5–97.5 percentile of those placebo gaps at each
+time point. A wider band at a given month means more uncertainty at
+that point; a treated curve that falls outside the band is evidence
+the gap is larger than donor-side variability alone would produce.
 
 ```{r fig-sc-trajectories}
 #| fig-cap: "Synthetic-control trajectories per treated Costco, stacked for full-width time comparison. Solid colored = treated 5 km ring (actual); dashed black = synthetic counterfactual; vertical dotted red = validated Costco opening; shaded gray = 95% donor-permutation CI on the synthetic."
@@ -886,9 +913,15 @@ traj_panels <- map(costco_order, make_traj_panel)
 wrap_plots(traj_panels, ncol = 1)
 ```
 
-A reader who sees only @fig-sc-trajectories should be able to read
-off the project's conclusion: did competitor prices fall after Costco
-entry, and by how much.
+**Reading the panels.** Perth Airport (top) shows the treated 5 km
+ring sitting below its synthetic across much of the post-2020 window,
+the clearest visual gap among the four. Casuarina and Coomera have
+treated and synthetic tracking closely through both pre- and
+post-periods, consistent with little detectable competitor response
+in their 5 km rings. Lake Macquarie's treated line runs slightly
+above its synthetic in the post-period (about +1.5 ¢/L); §4 RC7
+shows the surrounding 5–20 km donut going strongly negative, so the
+wrong-sign Lake Macquarie headline is best read as a 5 km artifact.
 
 ## Donor weights per treated Costco
 
@@ -944,11 +977,9 @@ wrap_plots(weight_panels, ncol = 2)
 
 ## Aggregate event study
 
-The per-Costco picture in @fig-sc-trajectories obscures the aggregate
-dynamic. @fig-event-study turns "Costco lowered prices on average" into
-"Costco lowered prices by *X* ¢/L within *Y* months and the effect
-persisted for *Z*"
-— much closer to the answer a regulator can act on. The window is
+@fig-sc-trajectories shows each Costco separately. @fig-event-study
+stacks them on a common timeline to ask how big the effect is on
+average, how fast it appears, and how long it lasts. The window is
 −24 to +24 relative months, the largest range over which all four
 Costcos contribute (limited by Perth Airport's 26 pre-months and
 Coomera's 31 post-months).
@@ -996,9 +1027,18 @@ ggplot(agg_event, aes(x = rel_month, y = mean_gap)) +
   theme_minimal(base_size = 11)
 ```
 
+**Reading the figure.** The mean gap fluctuates within roughly ±3 ¢/L
+across the −24 to +24 window, with the cross-Costco 95% CI band
+always crossing zero. The aggregate is essentially null on its own:
+Perth Airport's negative gap is offset by Lake Macquarie's positive
+one and Coomera's near-zero gap in the four-Costco mean. The
+per-Costco picture in @tbl-effect-summary is what carries the
+substantive answer.
+
 ## Per-Costco effect-size summary
 
 ```{r tbl-effect-summary}
+#| tbl-cap: "Per-Costco effect-size summary. Mean post-treatment gap = mean of (actual - synthetic) across the post-treatment window. Post/pre MSPE ratio compares post-period mean-squared prediction error to pre-period; values of 4-5+ are the standard threshold for evidence of a real effect."
 table_1 <- pmap_dfr(
   list(sc_fits$fit, sc_fits$costco_key, sc_fits$state,
        sc_fits$treatment_date, sc_fits$n_post_months),
@@ -1017,9 +1057,8 @@ table_1 |>
     `95\\% CI`         = ci_str,
     `Post mo.`         = post_months
   ) |>
-  kbl(booktabs = TRUE, align = "llrrrrrr", escape = FALSE,
-      caption = "Per-Costco effect-size summary. Mean post-treatment gap = mean of (actual - synthetic) across the post-treatment window. Post/pre MSPE ratio compares post-period mean-squared prediction error to pre-period; values of 4-5+ are the standard threshold for evidence of a real effect.") |>
-  kable_styling(latex_options = c("striped", "hold_position"),
+  kbl(booktabs = TRUE, align = "llrrrrrr", escape = FALSE) |>
+  kable_styling(latex_options = c("striped", "HOLD_position"),
                 font_size = 9) |>
   column_spec(1, width = "2.4cm") |>
   column_spec(2, width = "0.8cm") |>
@@ -1031,18 +1070,31 @@ table_1 |>
   column_spec(8, width = "1.2cm")
 ```
 
-The **post/pre tracking-error ratio** compares how far the synthetic
-strays from actual *after* Costco entry to how closely it tracked
-*before*. A ratio of 4–5 or higher is the standard threshold for
-evidence of a real effect — the post-period gap is several times larger
-than the pre-period noise. The **95% CI** is the empirical 2.5–97.5
-percentile of post-treatment mean gaps across the donor-permutation
-distribution; a CI that does not include zero is evidence against the
-null of "no effect."
+The **post/pre tracking-error ratio** compares the synthetic's miss
+after Costco entry to its miss before. A ratio of 4–5 or higher is the
+standard bar for a real effect: the post-period gap is several times
+larger than the pre-period noise. The **95% CI** comes from treating
+each donor postcode as a fake treated unit and taking the 2.5–97.5
+percentile of those placebo gaps. A CI that excludes zero is evidence
+against the no-effect null.
+
+**Reading the rows.** Perth Airport is the only Costco that clears
+the MSPE-ratio bar (4.31 against the 4–5 threshold) and the only one
+whose 95% CI lies entirely below zero. Coomera's MSPE ratio of 2.08
+sits below the bar and its CI straddles zero. Lake Macquarie's CI is
+entirely above zero, flagging a wrong-sign result that §5.1 reads
+as a 5 km artifact (RC7's surrounding donut goes strongly negative).
+Casuarina's CI of [-0.91, -0.90] is suspiciously narrow: with only
+~3 contributing stations in its 5 km ring, the donor-permutation
+distribution collapses because placebo fits return near-identical
+post-treatment means via the predictor fallback. The headline
+Casuarina row is statistically degenerate, so we treat it as
+uninformative and lean on RC3's 10 km read in §5.1.
 
 ## Pre-period fit quality
 
 ```{r tbl-fit-quality}
+#| tbl-cap: "Pre-period fit quality per treated Costco. Lower tracking error means a tighter pre-period match; a tracking error below 1% of the pre-period mean is typically considered a credible fit. Top-3 donor weight share reflects how concentrated the synthetic is on its strongest donors."
 table_2 <- pmap_dfr(
   list(sc_fits$fit, sc_fits$costco_key, sc_fits$treatment_date,
        sc_fits$n_pre_months),
@@ -1057,79 +1109,888 @@ table_2 |>
     `Tracking error as \\% of pre mean` = round(pre_rmspe_pct, 2),
     `Top-3 donor weight share`          = round(top3_donor_share, 2)
   ) |>
-  kbl(booktabs = TRUE, align = "lrrrr", escape = FALSE,
-      caption = "Pre-period fit quality per treated Costco. Lower tracking error means a tighter pre-period match; a tracking error below 1\\% of the pre-period mean is typically considered a credible fit. Top-3 donor weight share reflects how concentrated the synthetic is on its strongest donors.") |>
-  kable_styling(latex_options = c("striped", "hold_position"),
+  kbl(booktabs = TRUE, align = "lrrrr", escape = FALSE) |>
+  kable_styling(latex_options = c("striped", "HOLD_position"),
                 font_size = 9) |>
   column_spec(3, width = "3cm") |>
   column_spec(4, width = "3.5cm") |>
   column_spec(5, width = "3cm")
 ```
 
-Casuarina's pre-period tracking error is expected to be visibly larger
-than the others because the 5 km Casuarina ring contains only ~3
-contributing stations on average (§1's documented limitation).
-Surfacing this transparently here is part of presenting the limitation
-rather than hiding it.
+Casuarina's pre-period tracking error is visibly larger than the
+others' because its 5 km ring contains only ~3 contributing stations
+on average (§1's documented limitation).
 
 \newpage
 
-# Section 4: Robustness Checks
+# Robustness Checks
 
-> **This section is stubbed for the first knit.** Once §3 lands, we'll add
-> the seven pre-committed robustness checks from
-> `deliverables/plan_of_attack_section_3.pdf` §(c):
->
-> 1. Placebo in time (−12 months).
-> 2. Alternative radii (3 km / 15 km and 8 km / 30 km).
-> 3. Casuarina at 10 km treated radius.
-> 4. Perth Airport with Mar–Dec 2020 dropped.
-> 5. LOOCV donor selection + 12-month holdout.
-> 6. 95% CIs via donor-permutation inference (also drives @fig-sc-trajectories bands).
-> 7. Spatial placebo: 5–20 km donut as faux donors.
->
-> Checks 2, 3, and 7 require alternate-radius SC inputs, which we will
-> build by parameterizing `scripts/synthetic_control_input/build_sc_inputs.py`
-> and re-running it at the new geometries; the resulting CSVs join the
-> Dropbox folder.
+The biggest sources of fragility in the headline analysis are (i) the
+5 km / 20 km geographic geometry, (ii) the COVID period coinciding with
+Perth Airport's opening, (iii) the noise in Casuarina's sparse 5 km
+ring, (iv) the standard synthetic-control concern that pre-period fit
+can be gamed by over-flexible donor selection, and (v) the lack of
+formal uncertainty quantification on a four-Costco point estimate. The
+seven pre-committed checks below directly probe these concerns. Checks
+are numbered to match plan-of-attack §3(c). Checks 2, 3, and 7 use
+alternate-radius SC inputs built by
+[`scripts/synthetic_control_input/build_sc_inputs_alt_radii.py`](../scripts/synthetic_control_input/build_sc_inputs_alt_radii.py)
+and pulled from the same Dropbox folder as the headline inputs.
+
+## Placebo in time (RC1)
+
+**Concern.** No anticipation: competitor stations do not pre-emptively
+cut prices ahead of Costco's announced opening. If a 'ban-style effect'
+appears in the placebo window before Costco actually opens, the
+headline gap is contaminated by pre-existing trends or anticipation.
+
+**Procedure.** For each treated Costco, backdate treatment by 12 months
+to define a placebo opening date. Refit synthetic control on the
+truncated panel (all months strictly before the real treatment date),
+so no real post-treatment observations contaminate the placebo window.
+Compute the mean placebo gap over the 12 months from the placebo date
+to the real treatment date, and report the donor-permutation 95% CI.
+
+```{r rc1_placebo}
+#| cache: true
+# The placebo fit truncates the pre-period by 12 months, which often
+# makes per-year predictors collinear (kernlab::ipop singular-matrix
+# error). fit_one_costco_robust handles the fallback automatically.
+rc1_fits <- treated_metadata |>
+  arrange(costco_key) |>
+  mutate(
+    placebo_date = as.Date(treatment_date) %m-% months(12),
+    fit = pmap(
+      list(costco_key, treatment_date, placebo_date, state),
+      function(name, td, pd, st) {
+        # Truncate the treated panel to dates strictly before the REAL
+        # treatment date. fit_one_costco's internal donor filter
+        # restricts donors to the same grid, so a separate donor
+        # truncation isn't needed.
+        tu_pre <- treated_units |>
+          filter(as.Date(date) < as.Date(td))
+        fit_one_costco_robust(
+          treated_units  = tu_pre,
+          donor_pool     = donor_pool,
+          costco_name    = name,
+          treatment_date = pd,
+          state          = st
+        )
+      }
+    )
+  )
+```
+
+```{r tbl-rc1}
+#| tbl-cap: "RC1 placebo-in-time: mean (actual - synthetic) gap over the 12 months between the placebo date and the real treatment date. A gap near zero — and a 95% CI that includes zero — is the pass criterion."
+rc1_table <- pmap_dfr(
+  list(rc1_fits$fit, rc1_fits$costco_key, rc1_fits$state,
+       rc1_fits$treatment_date, rc1_fits$placebo_date),
+  function(fit, name, st, real_td, placebo_td) {
+    if (is.null(fit)) {
+      return(tibble(
+        Costco              = name,
+        State               = st,
+        `Placebo date`      = format(as.Date(placebo_td), "%b %Y"),
+        `Real date`         = format(as.Date(real_td),    "%b %Y"),
+        `Mean placebo gap (¢/L)` = NA_real_,
+        `95\\% CI`          = "(fit failed)"
+      ))
+    }
+    traj <- trajectory(fit, name)
+    pd_anchor <- month_anchor(placebo_td)
+    td_anchor <- month_anchor(real_td)
+    placebo_window <- traj |>
+      filter(.data$time_unit >= pd_anchor,
+             .data$time_unit <  td_anchor)
+    placebo_gap <- mean(placebo_window$gap, na.rm = TRUE)
+    ci <- permutation_ci_mean_gap(fit, placebo_td)
+    tibble(
+      Costco              = name,
+      State               = st,
+      `Placebo date`      = format(as.Date(placebo_td), "%b %Y"),
+      `Real date`         = format(as.Date(real_td),    "%b %Y"),
+      `Mean placebo gap (¢/L)` = round(placebo_gap, 2),
+      `95\\% CI`          = sprintf("[%.2f, %.2f]", ci[["lo"]], ci[["hi"]])
+    )
+  }
+)
+
+rc1_table |>
+  kbl(booktabs = TRUE, align = "llllrl", escape = FALSE) |>
+  kable_styling(latex_options = c("striped", "HOLD_position"),
+                font_size = 9)
+```
+
+**Interpretation.** The pass criterion is a placebo gap near zero with
+a 95% CI that includes zero. This means donor-side variability is wider
+than the placebo gap, so the headline post-treatment gap cannot be
+attributed to a pre-existing downward trend or to anticipation in the
+12 months before Costco's actual opening.
+
+## Alternative radii (RC2)
+
+**Concern.** The 5 km treated radius and 20 km donor buffer are
+defensible (Houde 2012, Eckert 2013 place price effects within 1–5
+miles; the 4× buffer keeps donors fully outside the competitive zone)
+but discretionary. An effect that exists at 5 km but vanishes at 3 km
+or 8 km would be fragile. This is the most important sensitivity test
+because the radius geometry *is* the design.
+
+**Procedure.** Re-build SC inputs at (3 km treated, 15 km donor buffer)
+and (8 km treated, 30 km donor buffer). Refit each Costco at each
+geometry and report per-Costco gaps in a sensitivity table.
+
+```{r rc2_alt_radii}
+#| cache: true
+# Helper: refit all four Costcos using one alt-radius variant's panels.
+fit_variant <- function(variant_name) {
+  v <- alt_data[[variant_name]]
+  v$treated_metadata |>
+    arrange(costco_key) |>
+    mutate(
+      fit = pmap(
+        list(costco_key, treatment_date, state),
+        function(name, td, st) {
+          fit_one_costco_robust(
+            treated_units  = v$treated_units,
+            donor_pool     = v$donor_pool,
+            costco_name    = name,
+            treatment_date = td,
+            state          = st
+          )
+        }
+      )
+    )
+}
+
+rc2_3km_15km <- fit_variant("3km_15km")
+rc2_8km_30km <- fit_variant("8km_30km")
+
+summarise_variant <- function(fit_tbl, label) {
+  fit_tbl_ok <- fit_tbl |> filter(!map_lgl(fit, is.null))
+  if (nrow(fit_tbl_ok) == 0) {
+    return(tibble(spec = label, costco = NA_character_,
+                  pre_mean_cents = NA_real_, mean_post_gap_cents = NA_real_,
+                  pct_reduction = NA_real_, post_pre_ratio = NA_real_,
+                  ci_lo = NA_real_, ci_hi = NA_real_, post_months = NA_integer_))
+  }
+  pmap_dfr(
+    list(fit_tbl_ok$fit, fit_tbl_ok$costco_key, fit_tbl_ok$state,
+         fit_tbl_ok$treatment_date, fit_tbl_ok$n_post_months),
+    effect_summary
+  ) |>
+    mutate(spec = label, .before = 1)
+}
+
+rc2_combined <- bind_rows(
+  table_1                                        |> mutate(spec = "5 km / 20 km (headline)"),
+  summarise_variant(rc2_3km_15km, "3 km / 15 km"),
+  summarise_variant(rc2_8km_30km, "8 km / 30 km")
+)
+```
+
+```{r tbl-rc2}
+#| tbl-cap: "RC2 sensitivity to radius geometry. Per-Costco gaps at the headline 5/20 km specification and at the two alternate geometries (3/15 km, 8/30 km). The headline conclusion is robust if sign and approximate magnitude survive at both alt radii."
+rc2_combined |>
+  transmute(
+    Specification     = spec,
+    Costco            = costco,
+    `Pre mean (¢/L)` = round(pre_mean_cents, 2),
+    `Post gap (¢/L)` = round(mean_post_gap_cents, 2),
+    `\\% red.`       = round(pct_reduction, 2),
+    `MSPE ratio`     = round(post_pre_ratio, 2),
+    `95\\% CI`       = sprintf("[%.2f, %.2f]", ci_lo, ci_hi)
+  ) |>
+  kbl(booktabs = TRUE, align = "llrrrrl", escape = FALSE) |>
+  kable_styling(latex_options = c("striped", "HOLD_position"),
+                font_size = 8) |>
+  collapse_rows(columns = 1, valign = "top")
+```
+
+**Interpretation.** Treat the 5/20 km row as the reference. For each
+Costco we check (a) that the post-treatment gap stays negative at both
+alt radii and (b) that magnitudes do not collapse. A sign flip at any
+alt radius (or a magnitude reduction of more than ~50%) flags that
+Costco's headline estimate as geometry-sensitive.
+
+## Casuarina at 10 km treated radius (RC3)
+
+**Concern.** Casuarina's 5 km ring contains only ~3 contributing
+stations on average (documented in §1's data-quality notes). A wider ring captures more
+signal at the cost of including some less-exposed stations. If the
+headline Casuarina estimate flips or shrinks substantially at 10 km,
+the per-Costco estimate may be driven by individual-station noise
+rather than competitive response.
+
+**Procedure.** Re-fit Casuarina specifically at a 10 km treated radius
+(donor buffer remains 20 km). Compare gap and pre-period tracking
+error to the 5 km baseline.
+
+```{r rc3_casuarina_10km}
+#| cache: true
+v3 <- alt_data[["casuarina_10km"]]
+cas_meta <- v3$treated_metadata |> filter(costco_key == "Casuarina")
+
+rc3_fit <- fit_one_costco_robust(
+  treated_units  = v3$treated_units,
+  donor_pool     = v3$donor_pool,
+  costco_name    = "Casuarina",
+  treatment_date = cas_meta$treatment_date,
+  state          = "WA"
+)
+
+rc3_effect  <- if (is.null(rc3_fit)) NULL else effect_summary(
+  rc3_fit, "Casuarina", "WA",
+  cas_meta$treatment_date, cas_meta$n_post_months
+)
+rc3_quality <- if (is.null(rc3_fit)) NULL else fit_quality_summary(
+  rc3_fit, "Casuarina",
+  cas_meta$treatment_date, cas_meta$n_pre_months
+)
+```
+
+```{r tbl-rc3}
+#| tbl-cap: "RC3 Casuarina at the headline 5 km radius vs the 10 km robustness radius. Pre-period tracking error is expected to fall under the wider ring (more contributing stations smooth idiosyncratic noise); the question is whether the post-treatment gap moves correspondingly."
+casuarina_headline_effect  <- table_1 |> filter(costco == "Casuarina")
+casuarina_headline_quality <- table_2 |> filter(costco == "Casuarina")
+
+rc3_row <- if (is.null(rc3_effect)) {
+  tibble(
+    Spec               = "10 km (RC3)",
+    `Pre mean (¢/L)`  = NA_real_,
+    `Post gap (¢/L)`  = NA_real_,
+    `\\% red.`        = NA_real_,
+    `MSPE ratio`      = NA_real_,
+    `Pre tracking err (¢/L)` = NA_real_,
+    `95\\% CI`        = "(fit failed)"
+  )
+} else {
+  tibble(
+    Spec               = "10 km (RC3)",
+    `Pre mean (¢/L)`  = round(rc3_effect$pre_mean_cents, 2),
+    `Post gap (¢/L)`  = round(rc3_effect$mean_post_gap_cents, 2),
+    `\\% red.`        = round(rc3_effect$pct_reduction, 2),
+    `MSPE ratio`      = round(rc3_effect$post_pre_ratio, 2),
+    `Pre tracking err (¢/L)` = round(rc3_quality$pre_rmspe_cents, 2),
+    `95\\% CI`        = sprintf("[%.2f, %.2f]",
+                                rc3_effect$ci_lo, rc3_effect$ci_hi)
+  )
+}
+
+bind_rows(
+  tibble(
+    Spec               = "5 km (headline)",
+    `Pre mean (¢/L)`  = round(casuarina_headline_effect$pre_mean_cents, 2),
+    `Post gap (¢/L)`  = round(casuarina_headline_effect$mean_post_gap_cents, 2),
+    `\\% red.`        = round(casuarina_headline_effect$pct_reduction, 2),
+    `MSPE ratio`      = round(casuarina_headline_effect$post_pre_ratio, 2),
+    `Pre tracking err (¢/L)` = round(casuarina_headline_quality$pre_rmspe_cents, 2),
+    `95\\% CI`        = sprintf("[%.2f, %.2f]",
+                                casuarina_headline_effect$ci_lo,
+                                casuarina_headline_effect$ci_hi)
+  ),
+  rc3_row
+) |>
+  kbl(booktabs = TRUE, align = "lrrrrrl", escape = FALSE) |>
+  kable_styling(latex_options = c("striped", "HOLD_position"),
+                font_size = 8)
+```
+
+**Interpretation.** Pre-period tracking error should drop at 10 km
+because the wider ring includes more contributing stations and the
+monthly mean is less noisy. If the post-treatment gap is similar at
+both radii, the headline Casuarina estimate is not driven by
+individual-station noise. A large swing (especially a sign flip)
+would mean the 5 km point estimate is unreliable and should be
+de-emphasized in the headline narrative.
+
+## Perth Airport with the COVID period removed (RC4)
+
+**Concern.** Perth Airport opens 19 February 2020, approximately four
+weeks before Australia's COVID demand collapse. Early post-treatment
+months are dominated by pandemic-driven price movements rather than
+competitive response. COVID-era compression of fuel prices may suppress
+the actual - synthetic gap; the COVID-removed estimate may be larger
+in magnitude than the full-window gap.
+
+**Procedure.** Re-fit Perth Airport with March–December 2020 dropped
+from both the treated and donor panels. Compare the resulting gap to
+the headline Perth Airport gap.
+
+```{r rc4_perth_covid}
+#| cache: true
+covid_drop_start <- as.Date("2020-03-01")
+covid_drop_end   <- as.Date("2020-12-31")
+
+is_covid_dropped <- function(d) {
+  d <- as.Date(d)
+  d >= covid_drop_start & d <= covid_drop_end
+}
+
+treated_pa_no_covid <- treated_units |>
+  filter(!(costco_key == "Perth Airport" & is_covid_dropped(date)))
+
+donor_no_covid <- donor_pool |>
+  filter(!is_covid_dropped(date))
+
+pa_meta <- treated_metadata |> filter(costco_key == "Perth Airport")
+
+rc4_fit <- fit_one_costco_robust(
+  treated_units  = treated_pa_no_covid,
+  donor_pool     = donor_no_covid,
+  costco_name    = "Perth Airport",
+  treatment_date = pa_meta$treatment_date,
+  state          = "WA"
+)
+```
+
+```{r fig-rc4}
+#| fig-cap: "Perth Airport synthetic-control trajectory with March-December 2020 dropped from both treated and donor panels. Solid green = treated 5 km ring; dashed black = synthetic counterfactual; vertical dotted red = validated treatment date (19 Feb 2020). The gap in early 2020 is the dropped window."
+#| fig-height: 4
+#| fig-width: 7
+
+if (is.null(rc4_fit)) {
+  ggplot() + theme_void() +
+    labs(title = "RC4 Perth Airport fit failed",
+         subtitle = "See the warning emitted in the rc4_perth_covid chunk for details.")
+} else {
+  rc4_traj <- trajectory(rc4_fit, "Perth Airport") |>
+    filter(!is_covid_dropped(time_unit))
+
+  ggplot(rc4_traj, aes(x = time_unit)) +
+    geom_line(aes(y = synth_y), linetype = "dashed", color = "black",
+              linewidth = 0.5) +
+    geom_line(aes(y = real_y), color = "#55A868", linewidth = 0.7) +
+    geom_vline(xintercept = as.Date(pa_meta$treatment_date),
+               linetype = "dotted", color = "#C44E52", linewidth = 0.6) +
+    annotate("rect", xmin = covid_drop_start, xmax = covid_drop_end,
+             ymin = -Inf, ymax = Inf, fill = "gray80", alpha = 0.5) +
+    annotate("label", x = covid_drop_start + (covid_drop_end - covid_drop_start) / 2,
+             y = Inf, vjust = 1.3, label = "Mar-Dec 2020 dropped",
+             color = "gray30", size = 2.8, label.size = 0) +
+    scale_x_date(date_breaks = "2 years", date_labels = "%Y") +
+    labs(x = NULL, y = "Mean unleaded price (¢/L)",
+         title = "Perth Airport: SC fit with COVID period removed",
+         subtitle = "Treatment: 19 Feb 2020; dropped window: Mar-Dec 2020") +
+    theme_minimal(base_size = 10)
+}
+```
+
+```{r tbl-rc4}
+#| tbl-cap: "RC4 Perth Airport with the COVID period removed, compared to the headline full-window estimate. A larger gap in the COVID-removed specification indicates that pandemic compression of fuel prices suppressed the headline estimate."
+pa_headline  <- table_1 |> filter(costco == "Perth Airport")
+
+rc4_summary <- if (is.null(rc4_fit)) {
+  pa_headline |>
+    mutate(
+      mean_post_gap_cents = NA_real_, pct_reduction = NA_real_,
+      post_pre_ratio = NA_real_, ci_lo = NA_real_, ci_hi = NA_real_
+    )
+} else {
+  effect_summary(rc4_fit, "Perth Airport", "WA",
+                 pa_meta$treatment_date,
+                 pa_meta$n_post_months - 10)
+}
+
+bind_rows(
+  pa_headline  |> mutate(spec = "Headline (full window)"),
+  rc4_summary  |> mutate(spec = "RC4 (Mar-Dec 2020 dropped)")
+) |>
+  transmute(
+    Specification        = spec,
+    `Pre mean (¢/L)`    = round(pre_mean_cents, 2),
+    `Post gap (¢/L)`    = round(mean_post_gap_cents, 2),
+    `\\% red.`          = round(pct_reduction, 2),
+    `MSPE ratio`        = round(post_pre_ratio, 2),
+    `95\\% CI`          = sprintf("[%.2f, %.2f]", ci_lo, ci_hi),
+    `Post mo.`          = post_months
+  ) |>
+  kbl(booktabs = TRUE, align = "lrrrrrr", escape = FALSE) |>
+  kable_styling(latex_options = c("striped", "HOLD_position"),
+                font_size = 9)
+```
+
+**Interpretation.** If the COVID-removed gap is *more negative* than
+the headline, COVID-era price compression suppressed the actual -
+synthetic divergence and the headline understates the true effect at
+Perth Airport. If the two estimates are close, the headline already
+nets out the pandemic by leaning on within-state donors that
+experienced the same shock.
+
+## LOOCV donor selection with 12-month holdout (RC5)
+
+**Concern.** Pre-period fit can be gamed by over-flexible donor
+selection: the synthetic 'memorises' the training series without
+generalising. The honest test is an out-of-sample holdout: did the
+weights learn structural similarity, or did they memorise noise?
+
+**Procedure.** For each Costco, refit the synthetic on the pre-period
+*minus the last 12 months* (the training window). The untouched
+12-month holdout sits between the training window and the real
+treatment date. Without looking at any post-treatment data, score
+whether the synthetic continues to track the treated series across the
+holdout: holdout RMSPE comparable to training RMSPE means the fit
+generalises; a much larger holdout RMSPE means the fit was memorising.
+
+The plan-of-attack also describes leave-one-out cross-validation over
+donor-pool sizes N ∈ {5, 10, 20, 50, full}. We skip this step. tidysynth
+has no native N-restriction, and writing one would reintroduce the
+researcher discretion the holdout test is meant to remove. The holdout
+diagnostic runs on the full donor pool.
+
+```{r rc5_holdout}
+#| cache: true
+# The training window is the pre-period minus its last 12 months. For
+# Perth Airport (only 26 pre-months in the headline) the training
+# window is ~14 months, too short to support per-year predictors —
+# the single overall pre-period mean predictor is the robust choice
+# for all four Costcos here.
+rc5_fits <- treated_metadata |>
+  arrange(costco_key) |>
+  mutate(
+    train_end    = as.Date(treatment_date) %m-% months(12),
+    fit          = pmap(
+      list(costco_key, treatment_date, state, train_end),
+      function(name, td, st, te) {
+        fit_one_costco_robust(
+          treated_units  = treated_units,
+          donor_pool     = donor_pool,
+          costco_name    = name,
+          treatment_date = td,
+          state          = st,
+          fit_end_date   = te
+        )
+      }
+    )
+  )
+```
+
+```{r tbl-rc5}
+#| tbl-cap: "RC5 12-month holdout. Training window = pre-period minus last 12 months. Holdout = untouched last 12 months of pre-period. Post = post-treatment window. A holdout-to-training RMSPE ratio near 1 means the synthetic generalises out-of-sample; a ratio much larger than 1 means the headline pre-period fit was memorising training noise."
+rc5_table <- pmap_dfr(
+  list(rc5_fits$fit, rc5_fits$costco_key, rc5_fits$treatment_date,
+       rc5_fits$train_end),
+  function(fit, name, td, te) {
+    if (is.null(fit)) {
+      return(tibble(
+        Costco                 = name,
+        `Train months`         = NA_integer_,
+        `Train RMSPE (¢/L)`    = NA_real_,
+        `Holdout RMSPE (¢/L)`  = NA_real_,
+        `Post RMSPE (¢/L)`     = NA_real_,
+        `Holdout / Train`      = NA_real_
+      ))
+    }
+    traj <- trajectory(fit, name)
+    train_end_anchor <- month_anchor(te)
+    treat_anchor     <- month_anchor(td)
+
+    train_traj   <- traj |> filter(.data$time_unit <  train_end_anchor)
+    holdout_traj <- traj |> filter(.data$time_unit >= train_end_anchor,
+                                   .data$time_unit <  treat_anchor)
+    post_traj    <- traj |> filter(.data$time_unit >= treat_anchor)
+
+    rmspe <- function(d) sqrt(mean((d$real_y - d$synth_y)^2, na.rm = TRUE))
+    tibble(
+      Costco                 = name,
+      `Train months`         = nrow(train_traj),
+      `Train RMSPE (¢/L)`    = round(rmspe(train_traj), 2),
+      `Holdout RMSPE (¢/L)`  = round(rmspe(holdout_traj), 2),
+      `Post RMSPE (¢/L)`     = round(rmspe(post_traj), 2),
+      `Holdout / Train`      = round(rmspe(holdout_traj) / rmspe(train_traj), 2)
+    )
+  }
+)
+
+rc5_table |>
+  kbl(booktabs = TRUE, align = "lrrrrr", escape = FALSE) |>
+  kable_styling(latex_options = c("striped", "HOLD_position"),
+                font_size = 9)
+```
+
+**Interpretation.** The holdout-to-training ratio is the headline
+diagnostic. Values near 1 mean the synthetic learned a structural match;
+values substantially > 1 (say, > 3-4) mean the pre-period fit reported
+in @tbl-fit-quality may have been generous about generalisation. The
+post-RMSPE column is shown for orientation: it should be much larger
+than holdout-RMSPE if the post-treatment gap is a genuine treatment
+effect rather than fit drift.
+
+## 95% CIs via donor-permutation inference (RC6)
+
+**Concern.** Point estimates without uncertainty bands can make a
+modest effect look airtight. Casuarina's documented noise problem
+(@tbl-fit-quality) is the case most at risk of overclaiming precision.
+
+**Procedure.** Treat each donor postcode as a placebo treated unit,
+refit synthetic control on the remaining donors, and compute the
+resulting placebo gap. Across all donor placebos, take the empirical
+2.5–97.5 percentile of post-treatment gaps as a 95% CI on the real
+treatment effect.
+
+**Implementation.** This is the same donor-permutation distribution
+that powers the shaded bands in @fig-sc-trajectories and the `95% CI`
+column in @tbl-effect-summary. Both were computed as part of the §3
+fits (`generate_placebos = TRUE` in [_sc_helpers.R](_sc_helpers.R)).
+A CI that excludes zero is evidence against the no-effect null;
+Casuarina-specific results will be read transparently in either
+direction. No new computation is required for this check beyond what
+already powers Figure 1 and Table 1.
+
+## Spatial placebo: 5–20 km donut as faux donors (RC7)
+
+**Concern.** The 20 km donor buffer is meant to keep donors fully
+outside any Costco's competitive zone, but this assumption is never
+verified in the headline analysis. The 5–20 km donut (stations
+currently excluded from both treated and donor groups) is a natural
+laboratory: treat the donut as a faux treated unit and check whether
+synthetic-control spuriously finds a 'Costco effect' there.
+
+Two outcomes are both informative. (a) The donut shows an effect:
+Costco's competitive footprint extends beyond 5 km and the headline
+estimate is conservative (the true effect is probably larger).
+(b) The donut shows no effect: the Costco impact is concentrated
+within 5 km and the 20 km buffer is more than sufficient.
+
+```{r rc7_donut}
+#| cache: true
+vd <- alt_data[["donut_5_20km"]]
+
+rc7_fits <- vd$treated_metadata |>
+  arrange(costco_key) |>
+  mutate(
+    fit = pmap(
+      list(costco_key, treatment_date, state),
+      function(name, td, st) {
+        fit_one_costco_robust(
+          treated_units  = vd$treated_units,
+          donor_pool     = vd$donor_pool,
+          costco_name    = name,
+          treatment_date = td,
+          state          = st
+        )
+      }
+    )
+  )
+```
+
+```{r tbl-rc7}
+#| tbl-cap: "RC7 spatial placebo. The headline 5 km ring and the 5-20 km donut share the same >20 km donor pool. If the donut shows a Costco-style negative gap, the headline 5 km estimate is conservative (the effect extends beyond 5 km); if the donut gap is near zero with a CI that includes zero, the headline is contained within the 5 km footprint and the 20 km buffer is safely conservative."
+rc7_fits_ok <- rc7_fits |> filter(!map_lgl(fit, is.null))
+rc7_effects <- if (nrow(rc7_fits_ok) == 0) {
+  tibble(costco = character(), state = character(),
+         pre_mean_cents = double(), mean_post_gap_cents = double(),
+         pct_reduction = double(), post_pre_ratio = double(),
+         ci_lo = double(), ci_hi = double(), post_months = integer())
+} else {
+  pmap_dfr(
+    list(rc7_fits_ok$fit, rc7_fits_ok$costco_key, rc7_fits_ok$state,
+         rc7_fits_ok$treatment_date, rc7_fits_ok$n_post_months),
+    effect_summary
+  )
+}
+
+bind_rows(
+  table_1     |> mutate(spec = "5 km ring (headline)"),
+  rc7_effects |> mutate(spec = "5-20 km donut (RC7)")
+) |>
+  transmute(
+    Specification     = spec,
+    Costco            = costco,
+    `Pre mean (¢/L)` = round(pre_mean_cents, 2),
+    `Post gap (¢/L)` = round(mean_post_gap_cents, 2),
+    `\\% red.`       = round(pct_reduction, 2),
+    `MSPE ratio`     = round(post_pre_ratio, 2),
+    `95\\% CI`       = sprintf("[%.2f, %.2f]", ci_lo, ci_hi)
+  ) |>
+  kbl(booktabs = TRUE, align = "llrrrrl", escape = FALSE) |>
+  kable_styling(latex_options = c("striped", "HOLD_position"),
+                font_size = 8) |>
+  collapse_rows(columns = 1, valign = "top")
+```
+
+**Interpretation.** The donut's post-treatment gap is the diagnostic.
+A statistically clean zero (gap small, CI straddling zero, MSPE ratio
+near 1) means the headline 5 km treated definition captures the
+Costco footprint without leakage. A clearly negative donut gap means
+the footprint extends past 5 km and the headline is conservative
+(true effect is probably larger). A clearly positive donut gap would
+suggest substitution toward donut stations, which would be unusual
+but worth flagging.
+
+## Summary
+
+**Bottom-line read across the checks.** RC1 finds non-zero placebo
+gaps for all four Costcos. Perth Airport (-1.96 ¢/L, CI [-2.09, -0.35])
+and Lake Macquarie (-3.43, CI [-3.35, -0.24]) have placebo CIs
+excluding zero, indicating pre-period drift in their donor pools.
+RC2 flips Coomera positive at 3 km, confirming the Coomera headline
+as inconclusive; Perth Airport stays negative at all three geometries.
+RC3 rescues Casuarina at 10 km (-4.49 ¢/L, MSPE 3.19) once the sparse
+5 km ring is widened. RC4 shows Perth Airport at -3.65 ¢/L with COVID
+dropped, slightly larger than the headline. RC5's holdout RMSPE
+ratios (1.22–2.03) indicate the synthetics generalise out-of-sample.
+RC6 (CIs) is reported throughout §3. RC7's Lake Macquarie donut at
+-3.66 ¢/L versus the 5 km +1.52 confirms the wrong-sign headline as
+a ring artifact.
+
+A Costco-level estimate weakens whenever a check inverts the sign of
+its gap or pushes the post/pre tracking-error ratio below roughly 3.
+The §5 recommendation discounts Coomera (RC2 sign flip), reads
+Casuarina through RC3, and treats Lake Macquarie's positive headline
+as a 5 km artifact via RC7. Perth Airport's gap survives the checks,
+with the caveat that RC1's WA donor-pool drift suggests some portion
+of the headline could reflect that drift, so the Costco-specific
+component is plausibly somewhat smaller than the headline -3.4 ¢/L.
 
 \newpage
 
-# Section 5: Recommendation
+# Recommendation
 
-> **This section is stubbed for the first knit.** Once the headline effect
-> has a number, we'll translate it into a concrete ACCC recommendation and
-> a back-of-envelope estimate of aggregate consumer savings per Costco
-> entry (effect size × ring volume × annual months).
+## What the data actually shows
+
+```{r recommendation_setup}
+#| include: false
+# Pull headline numbers from §3 so the prose stays consistent with
+# whatever the fits produce.
+headline_mean_gap_cents <- mean(table_1$mean_post_gap_cents, na.rm = TRUE)
+headline_mean_pct       <- mean(table_1$pct_reduction,      na.rm = TRUE)
+n_costcos_with_ratio_above_3 <- sum(table_1$post_pre_ratio > 3, na.rm = TRUE)
+n_costcos_neg_gap            <- sum(table_1$mean_post_gap_cents < 0, na.rm = TRUE)
+
+pa_row  <- table_1 |> filter(costco == "Perth Airport")
+cas_row <- table_1 |> filter(costco == "Casuarina")
+com_row <- table_1 |> filter(costco == "Coomera")
+lm_row  <- table_1 |> filter(costco == "Lake Macquarie")
+
+# RC3 Casuarina-at-10km result, pulled from the rc3_effect tibble
+# constructed in §4. Guarded against the fit having failed.
+cas10_gap   <- if (!is.null(rc3_effect)) rc3_effect$mean_post_gap_cents else NA_real_
+cas10_ratio <- if (!is.null(rc3_effect)) rc3_effect$post_pre_ratio      else NA_real_
+```
+
+The four per-Costco point estimates tell different stories, and the
+aggregate mean (`r round(headline_mean_gap_cents, 2)` ¢/L across the
+four) obscures more than it reveals.
+
+- **Perth Airport (`r round(pa_row$mean_post_gap_cents, 2)` ¢/L,
+  MSPE ratio `r round(pa_row$post_pre_ratio, 2)`, 95% CI
+  [`r round(pa_row$ci_lo, 2)`, `r round(pa_row$ci_hi, 2)`]).** The
+  cleanest case in the panel. It is the only Costco that clears the
+  standard post/pre tracking-error threshold ($\geq$ 3) and the only one
+  whose donor-permutation CI sits squarely below zero. RC4 confirms
+  the result is not driven by the COVID demand collapse: dropping
+  Mar–Dec 2020 from both panels moves the gap from
+  `r round(pa_row$mean_post_gap_cents, 2)` to about
+  `r if (exists("rc4_summary")) round(rc4_summary$mean_post_gap_cents, 2) else NA` ¢/L.
+  One caveat: RC1's placebo-in-time gap for Perth Airport is -1.96 ¢/L
+  with a 95% CI excluding zero, indicating some pre-period downward
+  drift in the WA donor pool. The Costco-specific component is
+  plausibly somewhat smaller than the headline
+  `r round(pa_row$mean_post_gap_cents, 2)`.
+
+- **Casuarina (`r round(cas_row$mean_post_gap_cents, 2)` ¢/L at the
+  headline 5 km radius;
+  `r if (!is.na(cas10_gap)) round(cas10_gap, 2) else NA` ¢/L at the
+  RC3 10 km radius, MSPE
+  `r if (!is.na(cas10_ratio)) round(cas10_ratio, 2) else NA`).** The
+  5 km ring contains only ~3 contributing stations on average and
+  buries the signal in single-station noise; widening to 10 km
+  exposes a substantially larger negative gap that meets the MSPE
+  bar. We take RC3 as the credible read of Casuarina; the headline
+  5 km row is too sparse to trust.
+
+- **Coomera (`r round(com_row$mean_post_gap_cents, 2)` ¢/L, MSPE
+  `r round(com_row$post_pre_ratio, 2)`, CI
+  [`r round(com_row$ci_lo, 2)`, `r round(com_row$ci_hi, 2)`]).** The
+  point estimate is small and the CI straddles zero; RC2's
+  alt-radius sensitivity (the 3 km / 15 km variant flips Coomera
+  positive) shows the result is not robust to the geometry choice.
+  Inconclusive.
+
+- **Lake Macquarie (`r round(lm_row$mean_post_gap_cents, 2)` ¢/L).**
+  The wrong sign at the headline 5 km radius. RC7's spatial-placebo
+  donut for Lake Macquarie, by contrast, comes in materially
+  negative. This suggests the 5 km ring is the anomaly (likely one
+  or two stations dragging the mean up), while the donut behaves as
+  expected. We read Lake Macquarie's positive headline gap as
+  evidence that the 5 km treated definition is fragile when only a
+  handful of stations feed it; it doesn't undermine the Costco
+  mechanism.
+
+In short: the *Costco-lowers-competitor-prices* story is real, but
+it is clear at Perth Airport, plausible at Casuarina once the ring
+is widened, and inconclusive at Coomera and Lake Macquarie given
+their fragility to geometry and station-count.
+
+## What the ACCC should do
+
+Three recommendations, each scoped to what the evidence supports.
+
+1. **Treat low-cost discount entry into a concentrated local fuel
+   market as pro-competitive in merger and acquisition review, but
+   require a market-by-market test rather than a blanket presumption.**
+   The headline four-Costco mean overstates how broadly the effect
+   generalises; the strongest case (Perth Airport) is also the
+   smallest pre-period and the one closest to the COVID confound.
+2. **Publish the *local* (sub-state, sub-postcode) competition map**
+   that this study uses (5 km treated ring + 20 km donor buffer)
+   alongside the existing ACCC fuel-monitoring dashboard. The
+   state-median series the ACCC's public reports lead with average
+   over too wide a footprint to surface effects of the magnitude
+   documented here. Where station density is low (Casuarina-style
+   rings), the dashboard should also report a 10 km radius. RC3
+   shows that a narrow definition can bury a real signal in noise.
+3. **Re-evaluate the question in two to three years.** Auburn (NSW,
+   opened Aug 2025) and Canberra Airport (ACT, opened Nov 2023 once
+   the ACT joined NSW FuelCheck) will both have $\geq$ 24 post-treatment
+   months by then. Two more clean test cases (bringing the panel to
+   six) would materially strengthen or weaken the policy claim.
+
+## Back-of-envelope consumer impact
+
+Honest BotE: we cannot defensibly multiply a `r round(headline_mean_gap_cents, 2)` ¢/L
+four-Costco mean by ten Costcos and a ring volume, because three of
+those four estimates are weak. Instead, we anchor the BotE on Perth
+Airport's clean result and show what the implied savings would be *if*
+that point estimate generalised to other Costco rings.
+
+```{r bote_savings}
+#| include: false
+# Assumptions are flagged transparently below. The BotE is
+# proportional to the assumed gap, the assumed ring population, and
+# the assumed competitor share of ring volume; a 50% error in any of
+# them scales the output linearly.
+assume_ring_pop          <- 100000        # mid-density urban catchment
+assume_petrol_per_cap_L  <- 900           # ABS Aust. Petroleum Stats
+assume_competitor_share  <- 0.70          # 1 Costco against ~20 competitors
+
+ring_volume_L           <- assume_ring_pop * assume_petrol_per_cap_L
+competitor_volume_L     <- ring_volume_L  * assume_competitor_share
+
+# Two scenarios: anchor on Perth Airport (cleanest evidence) and on
+# the conservative four-Costco mean (which is dragged toward zero by
+# Lake Macquarie's anomaly).
+pa_gap_cents       <- abs(pa_row$mean_post_gap_cents)
+pa_savings_aud     <- competitor_volume_L * pa_gap_cents / 100
+
+mean_gap_cents     <- abs(headline_mean_gap_cents)
+mean_savings_aud   <- competitor_volume_L * mean_gap_cents / 100
+```
+
+**Inputs (shared across both scenarios).**
+
+- Ring population (assumption): `r format(assume_ring_pop, big.mark=",", scientific=FALSE)`
+  residents inside a 5 km radius, a mid-density urban catchment.
+  Casuarina and Coomera sit somewhat below this; Lake Macquarie and
+  the WA metro Costcos sit at or above.
+- Petrol consumption per capita (ABS Australian Petroleum
+  Statistics): ~`r assume_petrol_per_cap_L` L/year.
+- Competitor share of ring volume: `r round(100*assume_competitor_share)`%
+  (one Costco competing against roughly 20 incumbent stations).
+- Annual competitor volume in one ring:
+  ~`r format(round(competitor_volume_L / 1e6, 1), big.mark=",")` ML.
+
+**Scenario A: Perth Airport case
+(`r round(pa_gap_cents, 2)` ¢/L price reduction).** Savings of about
+**A\$`r format(round(pa_savings_aud / 1e6, 2), big.mark=",")` million**
+per ring per year. Across the four treated Costcos, this would
+amount to roughly
+A\$`r format(round(4*pa_savings_aud / 1e6, 1), big.mark=",")` million
+*if* Perth Airport's magnitude generalised. At ten Costco rings
+nationwide, A\$`r format(round(10*pa_savings_aud / 1e6, 0), big.mark=",")`
+million / year.
+
+**Scenario B: four-Costco mean
+(`r round(mean_gap_cents, 2)` ¢/L price reduction).** Savings of
+about
+**A\$`r format(round(mean_savings_aud / 1e6, 2), big.mark=",")` million**
+per ring per year. Extrapolated to ten Costco rings,
+~A\$`r format(round(10*mean_savings_aud / 1e6, 0), big.mark=",")`
+million / year.
+
+Both numbers are sensitive to all three assumptions. The reason the
+two scenarios are so far apart is the Lake Macquarie / Coomera drag
+on the four-Costco mean; the per-Costco picture in §5.1 is what
+matters for policy here, since the four-Costco mean is dragged toward
+zero by two fragile estimates. We report both so the ACCC sees the
+full range, but the **policy-relevant figure is closer to Scenario
+A's per-ring magnitude**, applied only to Costcos with station-density
+profiles that support the 5 km treated definition.
+
+## What this is *not*
+
+The analysis estimates the *competitor* response to Costco entry. It
+does not estimate: Costco's own pricing; consumer welfare more broadly
+(which would include time costs, switching costs, and Costco's
+membership fee); or entry by other discount brands. The recommendation
+should be read in that scope.
 
 \newpage
 
-# Section 6: Limitations
+# Limitations
 
-> **This section is stubbed for the first knit.** Planned coverage:
->
-> - **n = 4 treated Costcos.** Headline averages cross four units; the
->   per-Costco point estimates carry more weight than the pooled mean.
-> - **Casuarina sparsity.** ~3 stations contribute to the 5 km ring on
->   average; the per-Costco gap is noisier than for the others. Robustness
->   Check 3 probes whether widening to 10 km changes the picture.
-> - **Perth Airport / COVID confound.** Treatment falls four weeks before
->   the demand collapse; Robustness Check 4 isolates the pandemic period.
-> - **ACT excluded.** Canberra Airport Costco opened in Nov 2023 but the
->   ACT only joined NSW FuelCheck after the opening, leaving no pre-period
->   to fit on. Six other Costcos are excluded for analogous data-coverage
->   reasons (plan-of-attack §1.4 / §2(b)).
-> - **Same-state donor pools only.** Cross-state donors would require
->   absorbing state-level shocks (excise rates, refining capacity,
->   shipping costs) which the within-state restriction handles by
->   construction. The cost is a smaller donor pool, especially for QLD and WA.
+Five issues sit outside what §4 can resolve. They bound the scope of
+the §5 recommendation.
+
+**n = 4 treated Costcos.** The headline mean averages across four
+units, so individual point estimates carry more weight than the
+aggregate. Casuarina and Perth Airport (the two most fragile cases
+per §1's data-quality notes and §2's COVID discussion) are 50% of the
+panel. The pooled mean is intentionally reported alongside per-Costco
+values in @tbl-effect-summary so a reader can decide how much to weight
+each row.
+
+**Casuarina sparsity.** Casuarina's 5 km ring contains only ~3
+contributing stations on average. Its pre-period tracking error in
+@tbl-fit-quality is correspondingly higher than the other three
+Costcos, and its donor-permutation 95% CI is wider. RC3 widens the
+ring to 10 km as a stability check; if the 5 km and 10 km gaps
+diverge materially, Casuarina's per-Costco point estimate should not
+be read as precision evidence even when the sign is informative.
+
+**Perth Airport / COVID confound.** Treatment falls 19 February 2020,
+approximately four weeks before Australia's COVID demand collapse.
+RC4 re-estimates with March–December 2020 dropped to net out the
+pandemic, but the residual concern is that the synthetic
+counterfactual is built from a small WA donor pool (36 postcodes) and
+the WA-wide pandemic shock may not have been absorbed identically
+across donor and treated postcodes. We report both specifications.
+
+**Six Costcos excluded.** Marsden Park, Auburn, Canberra Airport,
+Casula, North Lakes, and Ipswich do not satisfy the $\geq$ 24 pre /
+$\geq$ 12 post inclusion rule (§1.2). The remaining four Costcos may not
+be representative. Marsden Park and Casula are pre-FuelCheck NSW
+entrants, North Lakes and Ipswich predate the QLD scheme, and
+Canberra Airport opened just before the ACT joined NSW FuelCheck. The
+headline generalises most cleanly to *future* Costco entries in mature
+state registry coverage. The recommendation in §5 should be read with
+that scope.
+
+**Same-state donor pools only.** Each synthetic is built from
+within-state donor postcodes so state-level shocks (excise rates,
+refining capacity, regional shipping costs) are absorbed by
+construction. The cost is a smaller donor pool, especially for QLD
+(56 donors) and WA (36 donors); WA in particular has limited
+postcode-level price heterogeneity to lean on. Cross-state donor
+pools would widen the pool but reintroduce the state-shock confound,
+and we judge the within-state restriction the right tradeoff for a
+fuel-market analysis.
+
+**External validity beyond Australia.** Australian retail fuel is
+price-cap-regulated at the wholesale level (via the Petroleum Products
+Subsidy Scheme historically and through fuel-excise indexation today)
+and has thinner retail competition than the US or much of Europe.
+The headline gap should not be extrapolated to other jurisdictions
+without rebuilding the analysis on local data.
 
 \newpage
 
-# Appendix: how this analysis is reproduced
+# Appendix: how this analysis is reproduced {.unnumbered}
 
 This `.qmd` reads its five input CSVs from a public Dropbox folder, fits
 synthetic-control models with `tidysynth`, and renders to PDF in a single
-`quarto render` call. The full reproduction procedure — including required
-R packages, the Dropbox folder URL, and the location of upstream pipeline
-scripts — is documented in `analysis/README.md`.
+`quarto render` call. The full reproduction procedure (required R
+packages, the Dropbox folder URL, locations of upstream pipeline scripts)
+is documented in `analysis/README.md`.

@@ -1,7 +1,7 @@
 """
 Build the synthetic-control input panels.
 
-Outputs (australia/data/sc_inputs/):
+Outputs (default data/sc_inputs/, override with --out-dir):
   treated_units.csv      long:  costco_key × year × month × mean_price × n_obs × n_stations
   donor_pool.csv         long:  postcode × state × year × month × mean_price × n_obs × n_stations
   treated_metadata.csv   one row per Costco:  state, lat, lng, treatment_date, pre/post months
@@ -10,17 +10,26 @@ Outputs (australia/data/sc_inputs/):
                                                       min_dist_to_any_costco_km
 
 For each Costco × month, the treated-unit price is the mean of all
-non-Costco station prices within 5 km of the Costco.
+non-Costco station prices within NEAR_KM_TREATED of the Costco
+(or, if INNER_KM > 0, in the annulus between INNER_KM and NEAR_KM_TREATED —
+used by the Section 4 spatial-placebo robustness check, which treats the
+5-20 km donut around each Costco as a faux treated unit).
 
 For each postcode × month, the donor price is the mean of all non-Costco
 station prices in that postcode.
 
 A postcode is dropped from the donor pool if:
-  - it lies within 20 km of ANY Costco (might be picking up Costco effects)
+  - it lies within DONOR_EXCLUDE_KM of ANY Costco (might be picking up Costco effects)
   - it has fewer than 3 unique stations on average (price means too noisy)
   - it has fewer than 24 months of observations (insufficient pre-period coverage)
+
+The headline 5 km / 20 km specification runs as a script with no arguments
+(reproduces analysis/sc_inputs/). Section 4 robustness checks call build()
+directly from scripts/synthetic_control_input/build_sc_inputs_alt_radii.py
+with alternate radii and output directories.
 """
 
+import argparse
 import csv
 import datetime as dt
 import glob
@@ -33,13 +42,19 @@ from statistics import mean
 
 import openpyxl
 
-sys.path.insert(0, "australia/scripts")
+sys.path.insert(0, "scripts")
 from _nsw_reader import iter_nsw_data_rows
 
+# Headline-specification defaults. The build() function below overrides
+# these per-call; the constants are kept so the rest of the module can
+# read them as a single source of truth at import time.
 NEAR_KM_TREATED = 5.0
 DONOR_EXCLUDE_KM = 20.0
+INNER_KM = 0.0
 MIN_STATIONS_PER_POSTCODE = 3
 MIN_MONTHS_PER_POSTCODE = 24
+
+DEFAULT_OUT_DIR = "data/sc_inputs"
 
 # Treated Costcos with adequate pre AND post months and acceptable
 # historical coverage.
@@ -88,16 +103,22 @@ def is_unleaded_qld(t): return str(t).strip().lower() in ("unleaded 91", "e10", 
 def is_unleaded_wa(p):  return str(p).strip().upper() == "ULP"
 
 
-def load_station_classification():
+def load_station_classification(near_km=NEAR_KM_TREATED, inner_km=INNER_KM):
     """For each station, compute distance to each TREATED Costco and to any
     Costco. Return dict: (state, name_norm, postcode) → {
-       'treated_for': set of Costco keys (within 5 km),
+       'treated_for': set of Costco keys (treated radius around that Costco),
        'min_dist_any_costco': float km,
        'lat': float, 'lng': float,
-    }"""
+    }
+
+    A station is added to a Costco's treated_for set if its distance d to
+    that Costco satisfies inner_km < d <= near_km. inner_km defaults to 0
+    (the headline 5 km disc); the spatial-placebo robustness check passes
+    inner_km=5, near_km=20 to define the 5-20 km donut as the faux treated
+    unit."""
     by_key = {}
     by_name = defaultdict(list)
-    with open("australia/data/stations/station_coords.csv") as f:
+    with open("data/stations/station_coords.csv") as f:
         for r in csv.DictReader(f):
             try:
                 lat = float(r["lat"]); lng = float(r["lng"])
@@ -105,7 +126,8 @@ def load_station_classification():
                 continue
             treated_for = set()
             for cstate, ckey, op, clat, clng in COSTCOS_TREATED:
-                if haversine_km(lat, lng, clat, clng) <= NEAR_KM_TREATED:
+                d = haversine_km(lat, lng, clat, clng)
+                if inner_km < d <= near_km:
                     treated_for.add(ckey)
             min_d_any = min(haversine_km(lat, lng, clat, clng)
                             for _, clat, clng in ALL_COSTCO_COORDS)
@@ -141,7 +163,7 @@ def add_to_donor(donor_obs, state, postcode, ym, price, station_id):
 
 
 def ingest_nsw(treated_obs, donor_obs, by_key, by_name):
-    files = sorted(glob.glob("australia/_local/cache/nsw/*.xlsx"))
+    files = sorted(glob.glob("_local/cache/nsw/*.xlsx"))
     print(f"  NSW: {len(files)} files")
     for fi, f in enumerate(files):
         for (name, address, suburb, postcode, brand, fuel_code,
@@ -176,8 +198,8 @@ def ingest_nsw(treated_obs, donor_obs, by_key, by_name):
             print(f"    NSW {fi+1}/{len(files)}")
 
 
-def ingest_qld(treated_obs, donor_obs):
-    files = sorted(glob.glob("australia/_local/cache/qld/*.csv"))
+def ingest_qld(treated_obs, donor_obs, near_km=NEAR_KM_TREATED, inner_km=INNER_KM):
+    files = sorted(glob.glob("_local/cache/qld/*.csv"))
     print(f"  QLD: {len(files)} files")
     for fi, f in enumerate(files):
         with open(f, encoding="utf-8", errors="replace") as fh:
@@ -201,10 +223,13 @@ def ingest_qld(treated_obs, donor_obs):
                 postcode = (row.get("Site_Post_Code") or "").strip()
                 station_id = f"QLD|{row.get('SiteId') or ''}"
                 ym = (d.year, d.month)
-                # Treated contribution
+                # Treated contribution. A QLD station goes into a treated
+                # Costco's bucket if its distance to the Costco falls in
+                # (inner_km, near_km]. inner_km > 0 supports the donut case.
                 for cstate, ckey, op, clat, clng in COSTCOS_TREATED:
                     if cstate != "QLD": continue
-                    if haversine_km(lat, lng, clat, clng) <= NEAR_KM_TREATED:
+                    dist = haversine_km(lat, lng, clat, clng)
+                    if inner_km < dist <= near_km:
                         add_to_treated(treated_obs, ckey, ym, price, station_id)
                 # Donor contribution
                 if postcode:
@@ -214,7 +239,7 @@ def ingest_qld(treated_obs, donor_obs):
 
 
 def ingest_wa(treated_obs, donor_obs, by_key, by_name):
-    files = sorted(glob.glob("australia/_local/cache/wa/*.csv"))
+    files = sorted(glob.glob("_local/cache/wa/*.csv"))
     print(f"  WA: {len(files)} files")
     for fi, f in enumerate(files):
         with open(f, encoding="utf-8", errors="replace") as fh:
@@ -265,16 +290,36 @@ def compute_postcode_distances(by_key):
     return out
 
 
-def main():
+def build(near_km=NEAR_KM_TREATED, exclude_km=DONOR_EXCLUDE_KM,
+          out_dir=DEFAULT_OUT_DIR, inner_km=INNER_KM):
+    """Run the full pipeline once with the given geometry.
+
+    near_km     stations within (inner_km, near_km] of a treated Costco
+                form that Costco's treated unit.
+    exclude_km  postcodes within exclude_km of any Costco are dropped
+                from the donor pool.
+    out_dir     directory the four CSVs are written into (created if
+                needed).
+    inner_km    lower-bound annulus radius for the treated unit; >0
+                produces a donut (used by Section 4 spatial-placebo
+                robustness check). Default 0.
+    """
+    os.makedirs(out_dir, exist_ok=True)
+
+    geom = (f"inner_km={inner_km:g}, near_km={near_km:g}, "
+            f"exclude_km={exclude_km:g}, out_dir={out_dir}")
+    print(f"Building SC inputs ({geom})...")
+
     print("Loading station classification...")
-    by_key, by_name = load_station_classification()
+    by_key, by_name = load_station_classification(near_km=near_km,
+                                                  inner_km=inner_km)
     print(f"  {len(by_key):,} stations\n")
 
     print("Ingesting price records (this is the slow part)...")
     treated_obs = defaultdict(dict)
     donor_obs = defaultdict(dict)
     ingest_nsw(treated_obs, donor_obs, by_key, by_name)
-    ingest_qld(treated_obs, donor_obs)
+    ingest_qld(treated_obs, donor_obs, near_km=near_km, inner_km=inner_km)
     ingest_wa(treated_obs, donor_obs, by_key, by_name)
     print(f"\n  Treated buckets: {len(treated_obs):,}")
     print(f"  Donor buckets:   {len(donor_obs):,}\n")
@@ -297,7 +342,7 @@ def main():
             "n_observations": len(prices),
             "n_unique_stations": len(stations),
         })
-    out = "australia/data/sc_inputs/treated_units.csv"
+    out = os.path.join(out_dir, "treated_units.csv")
     with open(out, "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=list(treated_rows[0].keys()))
         w.writeheader()
@@ -334,7 +379,7 @@ def main():
         n_months = len(monthly)
         min_dist = pc_dists.get((state, postcode), 0)
         # Apply filters
-        if min_dist <= DONOR_EXCLUDE_KM:
+        if min_dist <= exclude_km:
             n_excluded_near += 1; continue
         if avg_stations < MIN_STATIONS_PER_POSTCODE:
             n_excluded_sparse += 1; continue
@@ -357,14 +402,14 @@ def main():
             "min_dist_any_costco_km": round(min_dist, 2),
         })
 
-    out = "australia/data/sc_inputs/donor_pool.csv"
+    out = os.path.join(out_dir, "donor_pool.csv")
     with open(out, "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=list(donor_rows[0].keys()))
         w.writeheader()
         for r in donor_rows: w.writerow(r)
     print(f"  wrote {out} ({len(donor_rows):,} rows from {len(donor_meta_rows)} donor postcodes)")
 
-    out = "australia/data/sc_inputs/donor_metadata.csv"
+    out = os.path.join(out_dir, "donor_metadata.csv")
     with open(out, "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=list(donor_meta_rows[0].keys()))
         w.writeheader()
@@ -386,7 +431,7 @@ def main():
             "n_pre_months": n_pre, "n_post_months": n_post,
             "avg_n_unique_stations": round(mean(r["n_unique_stations"] for r in rs), 2) if rs else 0,
         })
-    out = "australia/data/sc_inputs/treated_metadata.csv"
+    out = os.path.join(out_dir, "treated_metadata.csv")
     with open(out, "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=list(treated_meta[0].keys()))
         w.writeheader()
@@ -395,7 +440,7 @@ def main():
 
     # ---- Summary ----
     print("\n" + "="*70)
-    print("Synthetic-control inputs ready.")
+    print(f"Synthetic-control inputs ready ({geom}).")
     print("="*70)
     print(f"  Treated units:     4 Costcos")
     print(f"    {'Costco':22s}  {'state':>5s}  {'pre':>4s}  {'post':>5s}  {'avg n_stns':>10s}")
@@ -405,6 +450,31 @@ def main():
     print(f"  Donor postcodes:   {len(donor_meta_rows):,}")
     print(f"  Donor panel rows:  {len(donor_rows):,}")
     print(f"  Treated panel rows: {len(treated_rows)}")
+
+    return {
+        "near_km": near_km, "exclude_km": exclude_km, "inner_km": inner_km,
+        "out_dir": out_dir,
+        "n_treated_rows": len(treated_rows),
+        "n_donor_rows": len(donor_rows),
+        "n_donor_postcodes": len(donor_meta_rows),
+    }
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Build SC input panels at the headline 5/20 km geometry "
+                    "(or alternate radii via --near-km / --exclude-km).")
+    parser.add_argument("--near-km",    type=float, default=NEAR_KM_TREATED,
+                        help="Treated radius around each Costco (default 5.0).")
+    parser.add_argument("--exclude-km", type=float, default=DONOR_EXCLUDE_KM,
+                        help="Donor exclusion radius around any Costco (default 20.0).")
+    parser.add_argument("--inner-km",   type=float, default=INNER_KM,
+                        help="Inner annulus radius (>0 enables donut mode; default 0).")
+    parser.add_argument("--out-dir",    default=DEFAULT_OUT_DIR,
+                        help="Output directory for the four CSVs.")
+    args = parser.parse_args()
+    build(near_km=args.near_km, exclude_km=args.exclude_km,
+          out_dir=args.out_dir, inner_km=args.inner_km)
 
 
 if __name__ == "__main__":

@@ -119,22 +119,21 @@ Australia's national competition regulator. The ACCC publishes regular
 fuel-price monitoring reports and has flagged ongoing concerns about market
 concentration in Australian fuel retailing. One of the ACCC's main tools for
 improving competition in concentrated retail markets is reducing entry barriers
-for discount entrants — but whether such entrants actually discipline
-incumbent pricing is an empirical question, not a foregone conclusion.
+for discount entrants. Whether such entrants actually discipline incumbent
+pricing is an open empirical question.
 
 We ask:
 
 > **Does the entry of a Costco gas station into an Australian local market
 > cause nearby competitor stations to lower their retail fuel prices?**
 
-This is a causal question. We answer it using **synthetic control**, fit
-separately for each of the four Australian Costco fuel stations that satisfy
-our pre- and post-treatment data-availability rules: Perth Airport (WA, Feb 2020),
-Casuarina (WA, Nov 2022), Lake Macquarie (NSW, May 2022), and Coomera (QLD,
-May 2023). The complete plan, including identifying assumptions, sample
-construction, and the seven pre-committed robustness checks, is in
-`deliverables/plan_of_attack_section_{1,2,3}.pdf`. This document is the
-*execution* of that plan.
+This is a causal question. We answer it with **synthetic control**, fit
+separately to each of the four Costco fuel stations in Australia with enough
+pre- and post-opening price history to support estimation: Perth Airport
+(WA, Feb 2020), Casuarina (WA, Nov 2022), Lake Macquarie (NSW, May 2022),
+and Coomera (QLD, May 2023). The pre-committed plan (identifying assumptions,
+sample construction, robustness checks) is in
+`deliverables/plan_of_attack_section_{1,2,3}.pdf`.
 
 \newpage
 
@@ -142,10 +141,11 @@ construction, and the seven pre-committed robustness checks, is in
 
 ## Data sources
 
-We combine three publicly accessible Australian state fuel-price registries —
-**NSW FuelCheck** (data.nsw.gov.au), the **Queensland Fuel Price Reporting
-Scheme** (data.qld.gov.au), and **WA FuelWatch** (data.wa.gov.au) — with a
-hand-collected list of Costco fuel-station opening dates. The three registries
+We combine three publicly accessible Australian state fuel-price registries
+with a hand-collected list of Costco fuel-station opening dates. The
+registries are **NSW FuelCheck** (data.nsw.gov.au), the **Queensland Fuel
+Price Reporting Scheme** (data.qld.gov.au), and **WA FuelWatch**
+(data.wa.gov.au). The three registries
 together yield approximately **17.4 million station-day price records across
 6,084 unique stations between December 2016 and April 2026**. Each registry
 mandates public price reporting by every retail fuel station in the state.
@@ -213,9 +213,9 @@ the synthetic-control design exploits.
 
 ## The analysis panel
 
-After ingest, geo-coding (Costco distance), the regular-unleaded filter,
-sentinel-price drops, and two-stage station × month → ring/postcode × month
-aggregation, our analysis panel contains two pieces:
+The build pipeline cleans the raw registries (adds station coordinates,
+keeps only regular unleaded, drops implausible quotes, aggregates monthly).
+The analysis panel that comes out has two pieces:
 
 ```{r tbl-panel-summary}
 #| tbl-cap: "Analysis-ready panel sizes after sample-construction filters."
@@ -419,7 +419,7 @@ agree in shape: most non-Costco stations sit very far from any Costco.
   or `0.01`. After the filter, no postcode-month in the analysis panel
   falls outside 92–259 ¢/L (well inside the plausible Australian range).
 - **Casuarina sparse ring.** Casuarina's 5 km ring contains only about
-  three contributing stations on average — a documented limitation flagged
+  three contributing stations on average; this limitation was flagged
   in advance. Robustness Check 3 (Casuarina at 10 km) probes whether this
   noise drives the headline.
 - **Perth Airport opens four weeks before COVID.** Its early post-treatment
@@ -430,18 +430,16 @@ agree in shape: most non-Costco stations sit very far from any Costco.
 
 # Sample Construction
 
-Every choice between raw registry rows and the analysis panel deserves
-justification — the headline result is a causal claim about prices, so
-opacity at the construction stage would undercut everything downstream.
-The subsections below mirror Plan-of-Attack §2(a)–(g) in order. This
-section documents the 5 km treated ring / 20 km donor buffer geometry;
-alternate geometries appear in §4 Robustness Checks.
+Each subsection below walks through one sample-construction choice, in
+the same order as plan-of-attack §2(a)–(g). The choices here describe the
+5 km treated ring / 20 km donor buffer used in §3; §4 tests alternate
+geometries.
 
 ## Sample window
 
 The pre-period for each treated Costco runs from the start of its
-state's price registry — December 2016 for NSW, January 2018 for WA,
-December 2018 for QLD — through the day before that Costco's validated
+state's price registry (December 2016 for NSW, January 2018 for WA,
+December 2018 for QLD) through the day before that Costco's validated
 treatment date (§2.4). The post-period runs from the treatment date
 through April 2026, the most recent registry pull. Per-Costco coverage:
 
@@ -459,15 +457,12 @@ treated_metadata |>
   kable_styling(latex_options = c("striped", "hold_position"))
 ```
 
-Synthetic control fits its weights on the entire pre-period *trajectory*
-of the dependent variable, not just on a level. More pre-period
-observations tighten identification rather than dilute it — the opposite
-of the DID logic in which long pre-periods can introduce structural
-breaks into the parallel-trends assumption. Same-state donors experience
-the same world-shifts (oil-price regime changes, vehicle fleet turnover,
-federal excise adjustments) over the same window, so common shocks are
-absorbed into the synthetic by construction. We use as much pre-period
-as the data allow.
+Synthetic control fits weights to match the treated unit's full
+pre-period trajectory. More pre-period months tighten the fit; unlike
+DID, longer pre-periods don't risk breaking parallel trends in this
+design. Same-state donors absorb common shocks (oil-price changes, fleet
+turnover, federal excise adjustments) by construction. We use as much
+pre-period as the data allow.
 
 **COVID.** The 2020 demand collapse and recovery is the only structural
 break large enough to warrant explicit handling. Three of the four
@@ -492,8 +487,8 @@ panels.
 *local market* defined as all non-Costco retail stations within 5 km of
 the Costco's coordinates, summarized each month as the simple mean of
 those stations' monthly mean unleaded prices. Costco's own price quotes
-are excluded from the treated mean — the research question concerns
-competitor response, not Costco's own pricing.
+are excluded from the treated mean. The research question concerns
+competitor response; Costco's own pricing is outside scope.
 
 **Donor pool.** Each donor unit is a 4-digit Australian postcode,
 summarized the same way (monthly mean of non-Costco unleaded price
@@ -507,9 +502,9 @@ any plausible Costco competitive footprint.
 **Asymmetric radii (5 km treated, 20 km donor buffer).** The economics
 literature on retail fuel-price competition (Houde 2012; Eckert 2013)
 finds price effects concentrated within roughly 1–5 miles. 5 km
-(~3.1 mi) sits at the conservative end of that range — small enough to
-capture genuinely competing stations but not so small as to drop most
-of the local market. The 20 km donor buffer is intentionally a 4×
+(~3.1 mi) sits at the conservative end of that range: small enough to
+capture genuinely competing stations, large enough to include most of
+the local market. The 20 km donor buffer is intentionally a 4×
 multiple, providing a wide exclusion donut so that no donor postcode is
 partly affected by a Costco that isn't the one we're studying. The
 asymmetry biases the design *against* finding an effect: a narrow
@@ -517,7 +512,7 @@ treated definition shrinks the treated population to the most exposed
 stations, and the wide buffer shrinks the donor pool to truly untreated
 postcodes.
 
-**Outcome variable.** Regular unleaded — `FuelCode` in
+**Outcome variable.** Regular unleaded: `FuelCode` in
 `{U91, E10, P91}` for NSW; `Fuel_Type` in `{Unleaded 91, e10}` for QLD;
 `PRODUCT_DESCRIPTION = ULP` for WA. Unleaded is the highest-volume
 retail product in Australia, comparable across the three state schemes,
@@ -568,17 +563,16 @@ postcode-months, range 92–259 ¢/L, approximately bimodal across the
 pre-2022 / post-2022 price-regime divide).
 
 **Sentinel-value filter.** Individual price quotes outside 50–500 ¢/L
-are dropped before aggregation. This is a data-integrity filter, not
-winsorisation: it removes obvious registry artifacts (out-of-stock
-placeholder values like `9999` or `0.01`) rather than legitimate tail
-observations.
+are dropped before aggregation. This filter targets registry artifacts
+(out-of-stock placeholder values like `9999` or `0.01`); legitimate
+tail observations pass through. It is not a winsorisation step.
 
 **Missing months.** A postcode-month or treated ring-month with zero
 contributing station observations is left as missing (NA), never imputed
 as zero, never carried forward. Synthetic-control fitting handles
 missing months by ignoring them in the pre-period objective. §1's
 data-quality notes report that the largest run of missing months in any
-treated panel is three (Lake Macquarie), not material.
+treated panel is three (Lake Macquarie), well within tolerance.
 
 **No winsorisation in the main specification.** Two-stage monthly
 aggregation smooths individual-quote outliers: an extreme single quote
@@ -640,9 +634,9 @@ Costco fuel station's coordinates. NSW and WA historical registry files
 do not carry lat/lng, so coordinates are joined from one-time pulls of
 the live FuelCheck and FuelWatch APIs by (normalized name, postcode);
 QLD's historical files include coordinates inline. Stations that fail
-the coordinate join are dropped from analysis — they cannot be
-classified into a 5 km ring or a donor postcode without a known
-location. Per-registry join failure rates are in §2.6.
+the coordinate join are dropped from analysis. Without a known
+location, they cannot be classified into a 5 km ring or a donor
+postcode. Per-registry join failure rates are in §2.6.
 
 ## Aggregation
 
@@ -694,7 +688,7 @@ that mention them fail the coordinate join. The snapshot misses **2,376
 of 4,543 NSW historical stations (52.3%)** and **673 of 1,423 WA
 historical stations (47.3%)**; QLD is unaffected because its historical
 files carry coordinates inline. The loss falls almost entirely on the
-donor pool — all four treated Costcos join cleanly — and
+donor pool (all four treated Costcos join cleanly), and
 `r n_distinct(donor_pool$postcode)` donor postcodes survive the
 downstream geographic and quality filters. Second, station-name typos
 and mid-panel renames occasionally break the join; the build pipeline
@@ -761,14 +755,14 @@ treated Costcos and 196 candidate donor postcodes, a treated-versus-control
 mean comparison is too thin: a single anomalous Costco (e.g. Casuarina,
 with only ~3 contributing stations) would dominate the average. Synthetic
 control builds a weighted counterfactual for each treated unit
-individually — exactly the design the n = 4 case calls for.
+individually. This is the design the n = 4 case calls for.
 
 **Source of variation.** Costco fuel-station entry into a local market
 isn't driven by what's happening to local fuel prices. Site selection
 is driven by Costco warehouse logistics, land availability, and Costco's
-national rollout schedule — none of which respond to the local
-fuel-price trajectory at the chosen site. The variation we exploit is
-the staggered timing of the four openings (Feb 2020, May 2022, Nov 2022,
+national rollout schedule. None of these respond to the local fuel-price
+trajectory at the chosen site. The variation we exploit is the
+staggered timing of the four openings (Feb 2020, May 2022, Nov 2022,
 May 2023) across three states.
 
 **Identifying assumptions.** Each is paired with the figure or check
@@ -799,18 +793,16 @@ construction. Weights are chosen to minimize the average gap between
 the treated 5 km ring's monthly mean unleaded price and the weighted
 donor mean across the pre-period.
 
-**Method commitment.** Standard synthetic-control via R's `tidysynth`
-package — the modern tidyverse-friendly successor to the original
-`Synth` implementation. **Predictors:** yearly means of the outcome
-series over the pre-period (no auxiliary covariates — we have no
-postcode-level demographic panel that would justify them).
-**Pre-period objective:** minimize the average gap between treated and
-synthetic on monthly mean unleaded price (`optimization_window =
-pre_period` in `tidysynth::generate_weights`). **Inference:** estimate
-uncertainty by treating each donor postcode as a fake treated unit and
-measuring the resulting fake effect, summarized as the post/pre
-tracking-error ratio and as a 95% CI on the post-treatment gap. All
-fitting is driven by [`_sc_helpers.R::fit_one_costco()`](_sc_helpers.R).
+**Method commitment.** Standard synthetic control via R's `tidysynth`
+package. **Predictors:** yearly means of pre-period unleaded price (no
+auxiliary covariates; no postcode-level demographic panel justifies
+them here). **Pre-period objective:** minimize the average gap between
+treated and synthetic on monthly mean unleaded price
+(`optimization_window = pre_period` in `tidysynth::generate_weights`).
+**Inference:** treat each donor postcode as a fake treated unit and
+measure the resulting fake effect; report the post/pre tracking-error
+ratio and a 95% CI on the post-treatment gap. All fitting runs through
+[`_sc_helpers.R::fit_one_costco()`](_sc_helpers.R).
 
 ## Fitting the four synthetic controls
 
@@ -859,12 +851,12 @@ distribution is computed in the same pass. Caching is enabled
 Four stacked panels of treated vs synthetic trajectories. Solid colored =
 actual treated 5 km ring; dashed black = synthetic counterfactual;
 vertical dotted red = validated treatment date (§2.4); shaded gray
-band = 95% donor-permutation CI on the synthetic, computed by treating
-each donor postcode as a placebo treated unit and taking the empirical
-2.5–97.5 percentile of donor-side gaps at each time point. The wider
-the band, the larger the noise floor at that month — a treated curve
-that falls outside the band is evidence the gap is bigger than what
-donor-side variability would produce.
+band = 95% donor-permutation CI on the synthetic. The CI comes from
+re-fitting the synthetic on each donor postcode as if it were treated,
+then taking the 2.5–97.5 percentile of those placebo gaps at each
+time point. A wider band at a given month means more uncertainty at
+that point; a treated curve that falls outside the band is evidence
+the gap is larger than donor-side variability alone would produce.
 
 ```{r fig-sc-trajectories}
 #| fig-cap: "Synthetic-control trajectories per treated Costco, stacked for full-width time comparison. Solid colored = treated 5 km ring (actual); dashed black = synthetic counterfactual; vertical dotted red = validated Costco opening; shaded gray = 95% donor-permutation CI on the synthetic."
@@ -916,9 +908,9 @@ traj_panels <- map(costco_order, make_traj_panel)
 wrap_plots(traj_panels, ncol = 1)
 ```
 
-A reader who sees only @fig-sc-trajectories should be able to read
-off the project's conclusion: did competitor prices fall after Costco
-entry, and by how much.
+@fig-sc-trajectories carries the headline. The reader can see directly
+whether competitor prices fell after each Costco opened, and by how
+much.
 
 ## Donor weights per treated Costco
 
@@ -974,11 +966,9 @@ wrap_plots(weight_panels, ncol = 2)
 
 ## Aggregate event study
 
-The per-Costco picture in @fig-sc-trajectories obscures the aggregate
-dynamic. @fig-event-study turns "Costco lowered prices on average" into
-"Costco lowered prices by *X* ¢/L within *Y* months and the effect
-persisted for *Z*"
-— much closer to the answer a regulator can act on. The window is
+@fig-sc-trajectories shows each Costco separately. @fig-event-study
+stacks them on a common timeline to ask how big the effect is on
+average, how fast it appears, and how long it lasts. The window is
 −24 to +24 relative months, the largest range over which all four
 Costcos contribute (limited by Perth Airport's 26 pre-months and
 Coomera's 31 post-months).
@@ -1061,14 +1051,13 @@ table_1 |>
   column_spec(8, width = "1.2cm")
 ```
 
-The **post/pre tracking-error ratio** compares how far the synthetic
-strays from actual *after* Costco entry to how closely it tracked
-*before*. A ratio of 4–5 or higher is the standard threshold for
-evidence of a real effect — the post-period gap is several times larger
-than the pre-period noise. The **95% CI** is the empirical 2.5–97.5
-percentile of post-treatment mean gaps across the donor-permutation
-distribution; a CI that does not include zero is evidence against the
-null of "no effect."
+The **post/pre tracking-error ratio** compares the synthetic's miss
+after Costco entry to its miss before. A ratio of 4–5 or higher is the
+standard bar for a real effect: the post-period gap is several times
+larger than the pre-period noise. The **95% CI** comes from treating
+each donor postcode as a fake treated unit and taking the 2.5–97.5
+percentile of those placebo gaps. A CI that excludes zero is evidence
+against the no-effect null.
 
 ## Pre-period fit quality
 
@@ -1096,11 +1085,9 @@ table_2 |>
   column_spec(5, width = "3cm")
 ```
 
-Casuarina's pre-period tracking error is expected to be visibly larger
-than the others because the 5 km Casuarina ring contains only ~3
-contributing stations on average (§1's documented limitation).
-Surfacing this transparently here is part of presenting the limitation
-rather than hiding it.
+Casuarina's pre-period tracking error is visibly larger than the
+others' because its 5 km ring contains only ~3 contributing stations
+on average (§1's documented limitation).
 
 \newpage
 
@@ -1123,12 +1110,11 @@ and pulled from the same Dropbox folder as the headline inputs.
 **Concern.** No anticipation: competitor stations do not pre-emptively
 cut prices ahead of Costco's announced opening. If a 'ban-style effect'
 appears in the placebo window before Costco actually opens, the
-post-treatment gap reflects pre-existing trends or anticipation, not
-Costco entry.
+headline gap is contaminated by pre-existing trends or anticipation.
 
 **Procedure.** For each treated Costco, backdate treatment by 12 months
 to define a placebo opening date. Refit synthetic control on the
-truncated panel — all months strictly before the real treatment date —
+truncated panel (all months strictly before the real treatment date),
 so no real post-treatment observations contaminate the placebo window.
 Compute the mean placebo gap over the 12 months from the placebo date
 to the real treatment date, and report the donor-permutation 95% CI.
@@ -1205,7 +1191,7 @@ rc1_table |>
 ```
 
 **Interpretation.** The pass criterion is a placebo gap near zero with
-a 95% CI that includes zero — meaning donor-side variability is wider
+a 95% CI that includes zero. This means donor-side variability is wider
 than the placebo gap, so the headline post-treatment gap cannot be
 attributed to a pre-existing downward trend or to anticipation in the
 12 months before Costco's actual opening.
@@ -1293,7 +1279,7 @@ rc2_combined |>
 **Interpretation.** Treat the 5/20 km row as the reference. For each
 Costco we check (a) that the post-treatment gap stays negative at both
 alt radii and (b) that magnitudes do not collapse. A sign flip at any
-alt radius — or a magnitude reduction of more than ~50% — flags that
+alt radius (or a magnitude reduction of more than ~50%) flags that
 Costco's headline estimate as geometry-sensitive.
 
 ## Casuarina at 10 km treated radius (RC3)
@@ -1383,7 +1369,7 @@ bind_rows(
 because the wider ring includes more contributing stations and the
 monthly mean is less noisy. If the post-treatment gap is similar at
 both radii, the headline Casuarina estimate is not driven by
-individual-station noise. A large swing — especially a sign flip —
+individual-station noise. A large swing (especially a sign flip)
 would mean the 5 km point estimate is unreliable and should be
 de-emphasized in the headline narrative.
 
@@ -1503,7 +1489,7 @@ experienced the same shock.
 ## LOOCV donor selection with 12-month holdout (RC5)
 
 **Concern.** Pre-period fit can be gamed by over-flexible donor
-selection — the synthetic 'memorises' the training series without
+selection: the synthetic 'memorises' the training series without
 generalising. The honest test is an out-of-sample holdout: did the
 weights learn structural similarity, or did they memorise noise?
 
@@ -1515,13 +1501,11 @@ whether the synthetic continues to track the treated series across the
 holdout: holdout RMSPE comparable to training RMSPE means the fit
 generalises; a much larger holdout RMSPE means the fit was memorising.
 
-The plan-of-attack also describes a leave-one-out cross-validation over
-donor-pool sizes N ∈ {5, 10, 20, 50, full} to choose how many donors to
-retain. tidysynth has no native N-restriction primitive, and writing
-one introduces an additional layer of researcher discretion the
-holdout test is itself trying to remove — so we report the holdout
-diagnostic directly on the full donor pool and document the
-simplification here.
+The plan-of-attack also describes leave-one-out cross-validation over
+donor-pool sizes N ∈ {5, 10, 20, 50, full}. We skip this step. tidysynth
+has no native N-restriction, and writing one would reintroduce the
+researcher discretion the holdout test is meant to remove. The holdout
+diagnostic runs on the full donor pool.
 
 ```{r rc5_holdout}
 #| cache: true
@@ -1626,8 +1610,8 @@ already powers Figure 1 and Table 1.
 
 **Concern.** The 20 km donor buffer is meant to keep donors fully
 outside any Costco's competitive zone, but this assumption is never
-verified in the headline analysis. The 5–20 km donut — stations
-currently excluded from both treated and donor groups — is a natural
+verified in the headline analysis. The 5–20 km donut (stations
+currently excluded from both treated and donor groups) is a natural
 laboratory: treat the donut as a faux treated unit and check whether
 synthetic-control spuriously finds a 'Costco effect' there.
 
@@ -1695,8 +1679,8 @@ bind_rows(
 ```
 
 **Interpretation.** The donut's post-treatment gap is the diagnostic.
-A statistically clean zero — gap small, CI straddling zero, MSPE ratio
-near 1 — means the headline 5 km treated definition captures the
+A statistically clean zero (gap small, CI straddling zero, MSPE ratio
+near 1) means the headline 5 km treated definition captures the
 Costco footprint without leakage. A clearly negative donut gap means
 the footprint extends past 5 km and the headline is conservative
 (true effect is probably larger). A clearly positive donut gap would
@@ -1765,8 +1749,8 @@ four) obscures more than it reveals.
   5 km ring contains only ~3 contributing stations on average and
   buries the signal in single-station noise; widening to 10 km
   exposes a substantially larger negative gap that meets the MSPE
-  bar. We take RC3, not the headline row, as the credible read of
-  Casuarina.
+  bar. We take RC3 as the credible read of Casuarina; the headline
+  5 km row is too sparse to trust.
 
 - **Coomera (`r round(com_row$mean_post_gap_cents, 2)` ¢/L, MSPE
   `r round(com_row$post_pre_ratio, 2)`, CI
@@ -1779,12 +1763,12 @@ four) obscures more than it reveals.
 - **Lake Macquarie (`r round(lm_row$mean_post_gap_cents, 2)` ¢/L).**
   The wrong sign at the headline 5 km radius. RC7's spatial-placebo
   donut for Lake Macquarie, by contrast, comes in materially
-  negative — which suggests the 5 km ring is the anomaly (likely one
-  or two stations dragging the mean up), not the donut. We do not
-  read Lake Macquarie's positive headline gap as evidence against
-  the Costco mechanism; we read it as evidence that the 5 km
-  treated definition is fragile when only a handful of stations
-  feed it.
+  negative. This suggests the 5 km ring is the anomaly (likely one
+  or two stations dragging the mean up), while the donut behaves as
+  expected. We read Lake Macquarie's positive headline gap as
+  evidence that the 5 km treated definition is fragile when only a
+  handful of stations feed it; it doesn't undermine the Costco
+  mechanism.
 
 In short: the *Costco-lowers-competitor-prices* story is real, but
 it is clear at Perth Airport, plausible at Casuarina once the ring
@@ -1807,13 +1791,13 @@ Three recommendations, each scoped to what the evidence supports.
    state-median series the ACCC's public reports lead with average
    over too wide a footprint to surface effects of the magnitude
    documented here. Where station density is low (Casuarina-style
-   rings), the dashboard should also report a 10 km radius — RC3
+   rings), the dashboard should also report a 10 km radius. RC3
    shows that a narrow definition can bury a real signal in noise.
 3. **Re-evaluate the question in two to three years.** Auburn (NSW,
    opened Aug 2025) and Canberra Airport (ACT, opened Nov 2023 once
    the ACT joined NSW FuelCheck) will both have $\geq$ 24 post-treatment
-   months by then. Two more clean test cases — bringing the panel
-   to six — would materially strengthen or weaken the policy claim.
+   months by then. Two more clean test cases (bringing the panel to
+   six) would materially strengthen or weaken the policy claim.
 
 ## Back-of-envelope consumer impact
 
@@ -1848,8 +1832,8 @@ mean_savings_aud   <- competitor_volume_L * mean_gap_cents / 100
 
 **Inputs (shared across both scenarios).**
 
-- Ring population (assumption): `r format(assume_ring_pop, big.mark=",")`
-  residents inside a 5 km radius — a mid-density urban catchment.
+- Ring population (assumption): `r format(assume_ring_pop, big.mark=",", scientific=FALSE)`
+  residents inside a 5 km radius, a mid-density urban catchment.
   Casuarina and Coomera sit somewhat below this; Lake Macquarie and
   the WA metro Costcos sit at or above.
 - Petrol consumption per capita (ABS Australian Petroleum
@@ -1859,7 +1843,7 @@ mean_savings_aud   <- competitor_volume_L * mean_gap_cents / 100
 - Annual competitor volume in one ring:
   ~`r format(round(competitor_volume_L / 1e6, 1), big.mark=",")` ML.
 
-**Scenario A — Perth Airport case
+**Scenario A: Perth Airport case
 (`r round(pa_gap_cents, 2)` ¢/L price reduction).** Savings of about
 **A\$`r format(round(pa_savings_aud / 1e6, 2), big.mark=",")` million**
 per ring per year. Across the four treated Costcos, this would
@@ -1869,7 +1853,7 @@ A\$`r format(round(4*pa_savings_aud / 1e6, 1), big.mark=",")` million
 nationwide, A\$`r format(round(10*pa_savings_aud / 1e6, 0), big.mark=",")`
 million / year.
 
-**Scenario B — four-Costco mean
+**Scenario B: four-Costco mean
 (`r round(mean_gap_cents, 2)` ¢/L price reduction).** Savings of
 about
 **A\$`r format(round(mean_savings_aud / 1e6, 2), big.mark=",")` million**
@@ -1880,31 +1864,31 @@ million / year.
 Both numbers are sensitive to all three assumptions. The reason the
 two scenarios are so far apart is the Lake Macquarie / Coomera drag
 on the four-Costco mean; the per-Costco picture in §5.1 is what
-matters for policy, not the aggregate. We report both so the ACCC
-sees the full range, but the **policy-relevant figure is closer to
-Scenario A's per-ring magnitude**, applied only to Costcos with
-station-density profiles that support the 5 km treated definition.
+matters for policy here, since the four-Costco mean is dragged toward
+zero by two fragile estimates. We report both so the ACCC sees the
+full range, but the **policy-relevant figure is closer to Scenario
+A's per-ring magnitude**, applied only to Costcos with station-density
+profiles that support the 5 km treated definition.
 
 ## What this is *not*
 
-The analysis estimates the *competitor* response to Costco entry,
-not Costco's own pricing, not consumer welfare more broadly (which
-would include time costs, switching costs, and Costco's membership
-fee), and not entry by other discount brands. The recommendation
+The analysis estimates the *competitor* response to Costco entry. It
+does not estimate: Costco's own pricing; consumer welfare more broadly
+(which would include time costs, switching costs, and Costco's
+membership fee); or entry by other discount brands. The recommendation
 should be read in that scope.
 
 \newpage
 
 # Limitations
 
-Five concerns sit outside what §4's robustness checks can fully
-resolve. Each is acknowledged here so the recommendation in §5 is
-read in its proper scope.
+Five issues sit outside what §4 can resolve. They bound the scope of
+the §5 recommendation.
 
 **n = 4 treated Costcos.** The headline mean averages across four
 units, so individual point estimates carry more weight than the
-aggregate. Casuarina and Perth Airport — the two most fragile cases
-(§1's data-quality notes, §2's COVID discussion) — are 50% of the
+aggregate. Casuarina and Perth Airport (the two most fragile cases
+per §1's data-quality notes and §2's COVID discussion) are 50% of the
 panel. The pooled mean is intentionally reported alongside per-Costco
 values in @tbl-effect-summary so a reader can decide how much to weight
 each row.
@@ -1928,12 +1912,12 @@ across donor and treated postcodes. We report both specifications.
 **Six Costcos excluded.** Marsden Park, Auburn, Canberra Airport,
 Casula, North Lakes, and Ipswich do not satisfy the $\geq$ 24 pre /
 $\geq$ 12 post inclusion rule (§1.2). The remaining four Costcos may not
-be representative — Marsden Park and Casula are pre-FuelCheck NSW
+be representative. Marsden Park and Casula are pre-FuelCheck NSW
 entrants, North Lakes and Ipswich predate the QLD scheme, and
-Canberra Airport opened just before the ACT joined NSW FuelCheck —
-so the headline generalises most cleanly to *future* Costco entries
-in mature state registry coverage. The recommendation in §5 should
-be read with that scope.
+Canberra Airport opened just before the ACT joined NSW FuelCheck. The
+headline generalises most cleanly to *future* Costco entries in mature
+state registry coverage. The recommendation in §5 should be read with
+that scope.
 
 **Same-state donor pools only.** Each synthetic is built from
 within-state donor postcodes so state-level shocks (excise rates,
@@ -1958,6 +1942,6 @@ without rebuilding the analysis on local data.
 
 This `.qmd` reads its five input CSVs from a public Dropbox folder, fits
 synthetic-control models with `tidysynth`, and renders to PDF in a single
-`quarto render` call. The full reproduction procedure — including required
-R packages, the Dropbox folder URL, and the location of upstream pipeline
-scripts — is documented in `analysis/README.md`.
+`quarto render` call. The full reproduction procedure (required R
+packages, the Dropbox folder URL, locations of upstream pipeline scripts)
+is documented in `analysis/README.md`.

@@ -908,9 +908,15 @@ traj_panels <- map(costco_order, make_traj_panel)
 wrap_plots(traj_panels, ncol = 1)
 ```
 
-@fig-sc-trajectories carries the headline. The reader can see directly
-whether competitor prices fell after each Costco opened, and by how
-much.
+**Reading the panels.** Perth Airport (top) shows the treated 5 km
+ring sitting below its synthetic across much of the post-2020 window,
+the clearest visual gap among the four. Casuarina and Coomera have
+treated and synthetic tracking closely through both pre- and
+post-periods, consistent with little detectable competitor response
+in their 5 km rings. Lake Macquarie's treated line runs slightly
+above its synthetic in the post-period (about +1.5 ¢/L); §4 RC7
+shows the surrounding 5–20 km donut going strongly negative, so the
+wrong-sign Lake Macquarie headline is best read as a 5 km artifact.
 
 ## Donor weights per treated Costco
 
@@ -1016,6 +1022,14 @@ ggplot(agg_event, aes(x = rel_month, y = mean_gap)) +
   theme_minimal(base_size = 11)
 ```
 
+**Reading the figure.** The mean gap fluctuates within roughly ±3 ¢/L
+across the −24 to +24 window, with the cross-Costco 95% CI band
+always crossing zero. The aggregate is essentially null on its own:
+Perth Airport's negative gap is offset by Lake Macquarie's positive
+one and Coomera's near-zero gap in the four-Costco mean. The
+per-Costco picture in @tbl-effect-summary is what carries the
+substantive answer.
+
 ## Per-Costco effect-size summary
 
 ```{r tbl-effect-summary}
@@ -1058,6 +1072,19 @@ larger than the pre-period noise. The **95% CI** comes from treating
 each donor postcode as a fake treated unit and taking the 2.5–97.5
 percentile of those placebo gaps. A CI that excludes zero is evidence
 against the no-effect null.
+
+**Reading the rows.** Perth Airport is the only Costco that clears
+the MSPE-ratio bar (4.31 against the 4–5 threshold) and the only one
+whose 95% CI lies entirely below zero. Coomera's MSPE ratio of 2.08
+sits below the bar and its CI straddles zero. Lake Macquarie's CI is
+entirely above zero, flagging a wrong-sign result that §5.1 reads
+as a 5 km artifact (RC7's surrounding donut goes strongly negative).
+Casuarina's CI of [-0.91, -0.90] is suspiciously narrow: with only
+~3 contributing stations in its 5 km ring, the donor-permutation
+distribution collapses because placebo fits return near-identical
+post-treatment means via the predictor fallback. The headline
+Casuarina row is statistically degenerate, so we treat it as
+uninformative and lean on RC3's 10 km read in §5.1.
 
 ## Pre-period fit quality
 
@@ -1689,16 +1716,28 @@ but worth flagging.
 
 ## Summary
 
-The headline conclusion in §3.5 should be read jointly with this
-section. RC1 checks for anticipation; RC2 / RC3 probe the radius
-geometry; RC4 isolates Perth Airport's pandemic confound; RC5 is the
-out-of-sample holdout test; RC6 attaches uncertainty bands (already
-reported in @tbl-effect-summary and @fig-sc-trajectories); RC7 spatially
-places the headline within / beyond the 5 km treated definition. A
-Costco-level estimate weakens whenever a check inverts the sign of its
-gap or pushes the post/pre tracking-error ratio below roughly 3; the
-corresponding row of @tbl-effect-summary should then be discounted in
-the §5 recommendation.
+**Bottom-line read across the checks.** RC1 finds non-zero placebo
+gaps for all four Costcos. Perth Airport (-1.96 ¢/L, CI [-2.09, -0.35])
+and Lake Macquarie (-3.43, CI [-3.35, -0.24]) have placebo CIs
+excluding zero, indicating pre-period drift in their donor pools.
+RC2 flips Coomera positive at 3 km, confirming the Coomera headline
+as inconclusive; Perth Airport stays negative at all three geometries.
+RC3 rescues Casuarina at 10 km (-4.49 ¢/L, MSPE 3.19) once the sparse
+5 km ring is widened. RC4 shows Perth Airport at -3.65 ¢/L with COVID
+dropped, slightly larger than the headline. RC5's holdout RMSPE
+ratios (1.22–2.03) indicate the synthetics generalise out-of-sample.
+RC6 (CIs) is reported throughout §3. RC7's Lake Macquarie donut at
+-3.66 ¢/L versus the 5 km +1.52 confirms the wrong-sign headline as
+a ring artifact.
+
+A Costco-level estimate weakens whenever a check inverts the sign of
+its gap or pushes the post/pre tracking-error ratio below roughly 3.
+The §5 recommendation discounts Coomera (RC2 sign flip), reads
+Casuarina through RC3, and treats Lake Macquarie's positive headline
+as a 5 km artifact via RC7. Perth Airport's gap survives the checks,
+with the caveat that RC1's WA donor-pool drift suggests some portion
+of the headline could reflect that drift, so the Costco-specific
+component is plausibly somewhat smaller than the headline -3.4 ¢/L.
 
 \newpage
 
@@ -1740,6 +1779,11 @@ four) obscures more than it reveals.
   Mar–Dec 2020 from both panels moves the gap from
   `r round(pa_row$mean_post_gap_cents, 2)` to about
   `r if (exists("rc4_summary")) round(rc4_summary$mean_post_gap_cents, 2) else NA` ¢/L.
+  One caveat: RC1's placebo-in-time gap for Perth Airport is -1.96 ¢/L
+  with a 95% CI excluding zero, indicating some pre-period downward
+  drift in the WA donor pool. The Costco-specific component is
+  plausibly somewhat smaller than the headline
+  `r round(pa_row$mean_post_gap_cents, 2)`.
 
 - **Casuarina (`r round(cas_row$mean_post_gap_cents, 2)` ¢/L at the
   headline 5 km radius;

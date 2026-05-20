@@ -16,6 +16,11 @@ format:
     fig-width: 7
     fig-height: 4.5
     colorlinks: true
+    include-in-header:
+      text: |
+        \usepackage{float}
+        \floatplacement{table}{H}
+        \floatplacement{figure}{H}
 execute:
   echo: false
   warning: false
@@ -159,7 +164,7 @@ tibble::tribble(
   "WA FuelWatch",   "WA",   "Jan 2018 – Apr 2026",     "8,047,153",    "1,423"
 ) |>
   kbl(booktabs = TRUE, align = "lllrr") |>
-  kable_styling(latex_options = c("striped", "hold_position"))
+  kable_styling(latex_options = c("striped", "HOLD_position"))
 ```
 
 NSW FuelCheck and QLD FPRS record price-change events (a row per
@@ -203,7 +208,7 @@ excluded_rows <- tibble::tribble(
 
 bind_rows(treated_rows, excluded_rows) |>
   kbl(booktabs = TRUE, align = "llrrrl") |>
-  kable_styling(latex_options = c("striped", "hold_position"),
+  kable_styling(latex_options = c("striped", "HOLD_position"),
                 font_size = 9)
 ```
 
@@ -241,7 +246,7 @@ panel_summary <- tibble(
 panel_summary |>
   kbl(booktabs = TRUE,
       format.args = list(big.mark = ",")) |>
-  kable_styling(latex_options = c("striped", "hold_position"))
+  kable_styling(latex_options = c("striped", "HOLD_position"))
 ```
 
 The sample-construction funnel (raw rows → aggregated cells → final panel)
@@ -388,7 +393,7 @@ bind_rows(price_stats, dist_stats) |>
   mutate(across(c(Mean, SD, Min, p25, Median, p75, Max), \(x) round(x, 1))) |>
   kbl(booktabs = TRUE, align = "lrrrrrrrr",
       format.args = list(big.mark = ",")) |>
-  kable_styling(latex_options = c("striped", "hold_position", "scale_down"))
+  kable_styling(latex_options = c("striped", "HOLD_position", "scale_down"))
 ```
 
 The mean unleaded price row matches the combined treated + donor sample. The
@@ -454,7 +459,7 @@ treated_metadata |>
     `Post months`    = n_post_months
   ) |>
   kbl(booktabs = TRUE, align = "llrrr") |>
-  kable_styling(latex_options = c("striped", "hold_position"))
+  kable_styling(latex_options = c("striped", "HOLD_position"))
 ```
 
 Synthetic control fits weights to match the treated unit's full
@@ -545,7 +550,7 @@ tibble::tribble(
   "Plausible price range",  "50–500 ¢/L",   "Sentinel-value floor and ceiling; AU retail unleaded lives in 80–280 ¢/L",       "None; not an analytic threshold"
 ) |>
   kbl(booktabs = TRUE, align = "llll") |>
-  kable_styling(latex_options = c("striped", "hold_position"),
+  kable_styling(latex_options = c("striped", "HOLD_position"),
                 font_size = 9) |>
   column_spec(1, width = "2.8cm") |>
   column_spec(2, width = "2cm") |>
@@ -610,7 +615,7 @@ tibble::tribble(
   "Lake Macquarie",  "2 May 2022",                 "None; no fuel-station-specific opening date in public sources",                          "n/a",       "2 May 2022 (registry)"
 ) |>
   kbl(booktabs = TRUE, align = "lllll", escape = FALSE) |>
-  kable_styling(latex_options = c("striped", "hold_position"),
+  kable_styling(latex_options = c("striped", "HOLD_position"),
                 font_size = 9) |>
   column_spec(1, width = "2.2cm") |>
   column_spec(2, width = "2.5cm") |>
@@ -723,7 +728,7 @@ tibble::tribble(
   "Final treated panel (Costcos)",            "1",          "1",          "2",         "4 Costcos × 5 km ring × ~80–100 months = 375 (Costco × month) cells"
 ) |>
   kbl(booktabs = TRUE, align = "lllll") |>
-  kable_styling(latex_options = c("striped", "hold_position"),
+  kable_styling(latex_options = c("striped", "HOLD_position"),
                 font_size = 9) |>
   column_spec(1, width = "5cm") |>
   column_spec(2, width = "1.7cm") |>
@@ -1053,7 +1058,7 @@ table_1 |>
     `Post mo.`         = post_months
   ) |>
   kbl(booktabs = TRUE, align = "llrrrrrr", escape = FALSE) |>
-  kable_styling(latex_options = c("striped", "hold_position"),
+  kable_styling(latex_options = c("striped", "HOLD_position"),
                 font_size = 9) |>
   column_spec(1, width = "2.4cm") |>
   column_spec(2, width = "0.8cm") |>
@@ -1105,7 +1110,7 @@ table_2 |>
     `Top-3 donor weight share`          = round(top3_donor_share, 2)
   ) |>
   kbl(booktabs = TRUE, align = "lrrrr", escape = FALSE) |>
-  kable_styling(latex_options = c("striped", "hold_position"),
+  kable_styling(latex_options = c("striped", "HOLD_position"),
                 font_size = 9) |>
   column_spec(3, width = "3cm") |>
   column_spec(4, width = "3.5cm") |>
@@ -1213,7 +1218,7 @@ rc1_table <- pmap_dfr(
 
 rc1_table |>
   kbl(booktabs = TRUE, align = "llllrl", escape = FALSE) |>
-  kable_styling(latex_options = c("striped", "hold_position"),
+  kable_styling(latex_options = c("striped", "HOLD_position"),
                 font_size = 9)
 ```
 
@@ -1298,7 +1303,7 @@ rc2_combined |>
     `95\\% CI`       = sprintf("[%.2f, %.2f]", ci_lo, ci_hi)
   ) |>
   kbl(booktabs = TRUE, align = "llrrrrl", escape = FALSE) |>
-  kable_styling(latex_options = c("striped", "hold_position"),
+  kable_styling(latex_options = c("striped", "HOLD_position"),
                 font_size = 8) |>
   collapse_rows(columns = 1, valign = "top")
 ```
@@ -1388,7 +1393,7 @@ bind_rows(
   rc3_row
 ) |>
   kbl(booktabs = TRUE, align = "lrrrrrl", escape = FALSE) |>
-  kable_styling(latex_options = c("striped", "hold_position"),
+  kable_styling(latex_options = c("striped", "HOLD_position"),
                 font_size = 8)
 ```
 
@@ -1502,7 +1507,7 @@ bind_rows(
     `Post mo.`          = post_months
   ) |>
   kbl(booktabs = TRUE, align = "lrrrrrr", escape = FALSE) |>
-  kable_styling(latex_options = c("striped", "hold_position"),
+  kable_styling(latex_options = c("striped", "HOLD_position"),
                 font_size = 9)
 ```
 
@@ -1600,7 +1605,7 @@ rc5_table <- pmap_dfr(
 
 rc5_table |>
   kbl(booktabs = TRUE, align = "lrrrrr", escape = FALSE) |>
-  kable_styling(latex_options = c("striped", "hold_position"),
+  kable_styling(latex_options = c("striped", "HOLD_position"),
                 font_size = 9)
 ```
 
@@ -1700,7 +1705,7 @@ bind_rows(
     `95\\% CI`       = sprintf("[%.2f, %.2f]", ci_lo, ci_hi)
   ) |>
   kbl(booktabs = TRUE, align = "llrrrrl", escape = FALSE) |>
-  kable_styling(latex_options = c("striped", "hold_position"),
+  kable_styling(latex_options = c("striped", "HOLD_position"),
                 font_size = 8) |>
   collapse_rows(columns = 1, valign = "top")
 ```

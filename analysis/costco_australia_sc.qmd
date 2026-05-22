@@ -1726,7 +1726,10 @@ gaps for all four Costcos. Perth Airport (-1.96 ¢/L, CI [-2.09, -0.35])
 and Lake Macquarie (-3.43, CI [-3.35, -0.24]) have placebo CIs
 excluding zero, indicating pre-period drift in their donor pools.
 RC2 flips Coomera positive at 3 km, confirming the Coomera headline
-as inconclusive; Perth Airport stays negative at all three geometries.
+as inconclusive; Perth Airport stays negative at all three geometries,
+although its magnitude attenuates materially at 8 km / 30 km
+(-0.99 ¢/L vs the -3.40 headline), so the result is sensitive to how
+the local market is drawn.
 RC3 rescues Casuarina at 10 km (-4.49 ¢/L, MSPE 3.19) once the sparse
 5 km ring is widened. RC4 shows Perth Airport at -3.65 ¢/L with COVID
 dropped, slightly larger than the headline. RC5's holdout RMSPE
@@ -1768,6 +1771,31 @@ lm_row  <- table_1 |> filter(costco == "Lake Macquarie")
 # constructed in §4. Guarded against the fit having failed.
 cas10_gap   <- if (!is.null(rc3_effect)) rc3_effect$mean_post_gap_cents else NA_real_
 cas10_ratio <- if (!is.null(rc3_effect)) rc3_effect$post_pre_ratio      else NA_real_
+
+# Costco-specific component of the Perth Airport effect: headline
+# gap minus RC1's placebo-in-time gap (which estimates pre-existing
+# downward drift in the WA donor pool). The §5.2 narrative and the
+# §5.3 BotE both anchor on this rather than on the raw headline,
+# because the headline -3.4 ¢/L conflates the Costco effect with
+# the donor-pool drift.
+rc1_pa_drift_cents <- abs(
+  rc1_table |>
+    filter(Costco == "Perth Airport") |>
+    pull(`Mean placebo gap (¢/L)`)
+)
+pa_costco_specific_gap_cents <- abs(pa_row$mean_post_gap_cents) - rc1_pa_drift_cents
+
+# BotE volume constants — kept in this setup chunk so §5.2's prose
+# can reference the dynamic per-ring savings figure derived from
+# the Costco-specific gap above. The full BotE expansion (with the
+# 4-Costco-mean comparison) lives in §5.3.
+assume_ring_pop          <- 100000        # mid-density urban catchment
+assume_petrol_per_cap_L  <- 900           # ABS Aust. Petroleum Stats
+assume_competitor_share  <- 0.70          # 1 Costco against ~20 competitors
+ring_volume_L            <- assume_ring_pop * assume_petrol_per_cap_L
+competitor_volume_L      <- ring_volume_L  * assume_competitor_share
+
+pa_costco_specific_savings_aud <- competitor_volume_L * pa_costco_specific_gap_cents / 100
 ```
 
 The four per-Costco point estimates tell different stories, and the
@@ -1822,16 +1850,18 @@ four) obscures more than it reveals.
 In short: the *Costco-lowers-competitor-prices* story is real, but
 it is clear at Perth Airport, plausible at Casuarina once the ring
 is widened, and inconclusive at Coomera and Lake Macquarie given
-their fragility to geometry and station-count.
+their fragility to geometry and station-count. Both cases that
+carry the headline conclusion are in WA; the QLD and NSW cases are
+inconclusive.
 
 ## What the ACCC should do
 
 **The ACCC should use its market-study and public-advocacy powers
 to press state planning authorities and local councils to lower
-zoning, lease, and approval barriers to low-cost discount fuel
-retailers entering concentrated local markets, and should treat
-the price-reducing effect of discount entry as a key factor when
-reviewing fuel-retail mergers.**
+zoning, lease, and approval barriers facing Costco when it seeks
+to enter concentrated local markets, and treat the documented
+Costco price-discipline effect as a substantive consideration in
+fuel-retail merger review.**
 
 Our analysis found one clean case (Perth Airport: a sustained
 competitor-price reduction of about 3 ¢/L over six years, robust
@@ -1839,35 +1869,37 @@ to dropping the COVID period), one corroborating sensitivity
 check (Casuarina at a 10 km radius: -4.5 ¢/L), and two
 inconclusive but not contradictory cases. Both clean cases are in
 WA. At Perth Airport, the price drop we can attribute
-specifically to Costco is closer to 1.5 to 2 ¢/L, because some of
+specifically to Costco is closer to
+`r round(pa_costco_specific_gap_cents, 1)` ¢/L, because some of
 the 3 ¢/L was already happening in nearby postcodes before Costco
 opened. The effect also shrinks if we widen the ring we measure:
 at 8 km instead of 5 km, the Perth Airport gap drops to about
 1 ¢/L, which means the result depends on exactly how the local
 market is drawn. Even with those caveats, the ACCC now has direct
 evidence, from Australian fuel markets rather than from overseas
-studies, that a low-cost discount entrant can durably reduce
-incumbent fuel prices in at least some concentrated Australian
-local markets.
+studies, that Costco entry can durably reduce incumbent fuel
+prices in at least some concentrated Australian local markets.
 
 This evidence is not strong enough for the ACCC to mandate
 anything, but it is strong enough to advocate, and advocacy is
 the right tool here. The ACCC cannot itself approve new fuel
 stations; planning, zoning, and lease decisions sit with state
 governments and local councils. What the ACCC can do is publicly
-back discount-fuel entry in markets like Perth Airport, where
-this study shows it works. The cost of doing so is essentially
-zero. If Perth Airport's price reduction holds up in even a few
-more concentrated Australian metros, the consumer savings work
-out to roughly A\$2 million per Costco ring per year, or about
-A\$20 million per year across ten new rings nationally. Limiting
-the recommendation to specific concentrated markets, rather than
+back Costco entry in markets like Perth Airport, where this study
+shows it works. The cost of doing so is essentially zero. If
+Perth Airport's Costco-specific magnitude generalises to even a
+handful of currently-unentered concentrated Australian metros,
+the consumer savings work out to roughly
+A\$`r round(pa_costco_specific_savings_aud / 1e6, 1)` million
+per Costco ring per year, or about
+A\$`r round(10 * pa_costco_specific_savings_aud / 1e6, 0)` million
+per year across ten new rings nationally. Limiting the
+recommendation to specific concentrated markets, rather than
 claiming Costco entry helps everywhere, keeps the position
-defensible. The same evidence also strengthens the ACCC's hand
-when one fuel retailer tries to buy out a discount competitor:
-this study shows that what gets lost in such a deal is real
-downward pressure on local fuel prices, not a theoretical
-concern.
+defensible. The same evidence also gives the ACCC's merger review
+a concrete reference point: where a deal would reduce the kind of
+low-cost discount competition Costco represents, this study shows
+the loss would be real, not theoretical.
 
 Three operational moves give the recommendation a concrete handle:
 
@@ -1892,29 +1924,23 @@ Three operational moves give the recommendation a concrete handle:
 
 Honest BotE: we cannot defensibly multiply a `r round(headline_mean_gap_cents, 2)` ¢/L
 four-Costco mean by ten Costcos and a ring volume, because three of
-those four estimates are weak. Instead, we anchor the BotE on Perth
-Airport's clean result and show what the implied savings would be *if*
-that point estimate generalised to other Costco rings.
+those four estimates are weak. Instead, we anchor the BotE on the
+**Costco-specific component** of Perth Airport's clean result — the
+headline `r round(abs(pa_row$mean_post_gap_cents), 2)` ¢/L gap minus
+the `r round(rc1_pa_drift_cents, 2)` ¢/L pre-period drift documented
+in RC1, leaving about `r round(pa_costco_specific_gap_cents, 2)` ¢/L
+attributable to Costco — and show what the implied savings would be
+*if* that magnitude generalised to other Costco rings.
 
 ```{r bote_savings}
 #| include: false
-# Assumptions are flagged transparently below. The BotE is
-# proportional to the assumed gap, the assumed ring population, and
-# the assumed competitor share of ring volume; a 50% error in any of
-# them scales the output linearly.
-assume_ring_pop          <- 100000        # mid-density urban catchment
-assume_petrol_per_cap_L  <- 900           # ABS Aust. Petroleum Stats
-assume_competitor_share  <- 0.70          # 1 Costco against ~20 competitors
-
-ring_volume_L           <- assume_ring_pop * assume_petrol_per_cap_L
-competitor_volume_L     <- ring_volume_L  * assume_competitor_share
-
-# Two scenarios: anchor on Perth Airport (cleanest evidence) and on
-# the conservative four-Costco mean (which is dragged toward zero by
-# Lake Macquarie's anomaly).
-pa_gap_cents       <- abs(pa_row$mean_post_gap_cents)
-pa_savings_aud     <- competitor_volume_L * pa_gap_cents / 100
-
+# BotE assumptions and the Costco-specific Perth Airport savings are
+# defined in the §5.1 recommendation_setup chunk so §5.2's prose can
+# reference them. Here we add the second scenario (the dragged-toward-
+# zero four-Costco mean) for the comparison block below. The BotE is
+# proportional to the assumed gap, ring population, and competitor
+# share of ring volume; a 50% error in any of them scales the output
+# linearly.
 mean_gap_cents     <- abs(headline_mean_gap_cents)
 mean_savings_aud   <- competitor_volume_L * mean_gap_cents / 100
 ```
@@ -1932,15 +1958,20 @@ mean_savings_aud   <- competitor_volume_L * mean_gap_cents / 100
 - Annual competitor volume in one ring:
   ~`r format(round(competitor_volume_L / 1e6, 1), big.mark=",")` ML.
 
-**Scenario A: Perth Airport case
-(`r round(pa_gap_cents, 2)` ¢/L price reduction).** Savings of about
-**A\$`r format(round(pa_savings_aud / 1e6, 2), big.mark=",")` million**
+**Scenario A: Perth Airport Costco-specific
+(`r round(pa_costco_specific_gap_cents, 2)` ¢/L price reduction).**
+Savings of about
+**A\$`r format(round(pa_costco_specific_savings_aud / 1e6, 2), big.mark=",")` million**
 per ring per year. Across the four treated Costcos, this would
 amount to roughly
-A\$`r format(round(4*pa_savings_aud / 1e6, 1), big.mark=",")` million
-*if* Perth Airport's magnitude generalised. At ten Costco rings
-nationwide, A\$`r format(round(10*pa_savings_aud / 1e6, 0), big.mark=",")`
-million / year.
+A\$`r format(round(4*pa_costco_specific_savings_aud / 1e6, 1), big.mark=",")` million
+*if* the Costco-specific Perth Airport magnitude generalised. At ten
+Costco rings nationwide,
+A\$`r format(round(10*pa_costco_specific_savings_aud / 1e6, 0), big.mark=",")`
+million / year. For comparison, using the unadjusted headline gap
+(`r round(abs(pa_row$mean_post_gap_cents), 2)` ¢/L) would give roughly
+A\$`r format(round(competitor_volume_L * abs(pa_row$mean_post_gap_cents) / 1e8, 1), big.mark=",")` million
+per ring per year — overstating the Costco-specific contribution per §5.1.
 
 **Scenario B: four-Costco mean
 (`r round(mean_gap_cents, 2)` ¢/L price reduction).** Savings of
@@ -1976,11 +2007,13 @@ the §5 recommendation.
 
 **n = 4 treated Costcos.** The headline mean averages across four
 units, so individual point estimates carry more weight than the
-aggregate. Casuarina and Perth Airport (the two most fragile cases
-per §1's data-quality notes and §2's COVID discussion) are 50% of the
-panel. The pooled mean is intentionally reported alongside per-Costco
-values in @tbl-effect-summary so a reader can decide how much to weight
-each row.
+aggregate. Casuarina and Perth Airport — both with pre-existing
+concerns (Casuarina's sparse 5 km ring, Perth Airport's COVID
+overlap) addressed by the relevant robustness checks — are the
+two cases that carry the headline conclusion in §5, and both are
+in WA. The pooled mean is intentionally reported alongside
+per-Costco values in @tbl-effect-summary so a reader can decide how
+much to weight each row.
 
 **Casuarina sparsity.** Casuarina's 5 km ring contains only ~3
 contributing stations on average. Its pre-period tracking error in

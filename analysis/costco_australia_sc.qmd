@@ -1826,27 +1826,67 @@ their fragility to geometry and station-count.
 
 ## What the ACCC should do
 
-Three recommendations, each scoped to what the evidence supports.
+**The ACCC should use its market-study and public-advocacy powers
+to press state planning authorities and local councils to lower
+zoning, lease, and approval barriers to low-cost discount fuel
+retailers entering concentrated local markets, and should treat
+the price-reducing effect of discount entry as a key factor when
+reviewing fuel-retail mergers.**
 
-1. **Treat low-cost discount entry into a concentrated local fuel
-   market as pro-competitive in merger and acquisition review, but
-   require a market-by-market test rather than a blanket presumption.**
-   The headline four-Costco mean overstates how broadly the effect
-   generalises; the strongest case (Perth Airport) is also the
-   smallest pre-period and the one closest to the COVID confound.
-2. **Publish the *local* (sub-state, sub-postcode) competition map**
-   that this study uses (5 km treated ring + 20 km donor buffer)
-   alongside the existing ACCC fuel-monitoring dashboard. The
-   state-median series the ACCC's public reports lead with average
-   over too wide a footprint to surface effects of the magnitude
-   documented here. Where station density is low (Casuarina-style
-   rings), the dashboard should also report a 10 km radius. RC3
-   shows that a narrow definition can bury a real signal in noise.
-3. **Re-evaluate the question in two to three years.** Auburn (NSW,
-   opened Aug 2025) and Canberra Airport (ACT, opened Nov 2023 once
-   the ACT joined NSW FuelCheck) will both have $\geq$ 24 post-treatment
-   months by then. Two more clean test cases (bringing the panel to
-   six) would materially strengthen or weaken the policy claim.
+Our analysis found one clean case (Perth Airport: a sustained
+competitor-price reduction of about 3 ¢/L over six years, robust
+to dropping the COVID period), one corroborating sensitivity
+check (Casuarina at a 10 km radius: -4.5 ¢/L), and two
+inconclusive but not contradictory cases. Both clean cases are in
+WA. At Perth Airport, the price drop we can attribute
+specifically to Costco is closer to 1.5 to 2 ¢/L, because some of
+the 3 ¢/L was already happening in nearby postcodes before Costco
+opened. The effect also shrinks if we widen the ring we measure:
+at 8 km instead of 5 km, the Perth Airport gap drops to about
+1 ¢/L, which means the result depends on exactly how the local
+market is drawn. Even with those caveats, the ACCC now has direct
+evidence, from Australian fuel markets rather than from overseas
+studies, that a low-cost discount entrant can durably reduce
+incumbent fuel prices in at least some concentrated Australian
+local markets.
+
+This evidence is not strong enough for the ACCC to mandate
+anything, but it is strong enough to advocate, and advocacy is
+the right tool here. The ACCC cannot itself approve new fuel
+stations; planning, zoning, and lease decisions sit with state
+governments and local councils. What the ACCC can do is publicly
+back discount-fuel entry in markets like Perth Airport, where
+this study shows it works. The cost of doing so is essentially
+zero. If Perth Airport's price reduction holds up in even a few
+more concentrated Australian metros, the consumer savings work
+out to roughly A\$2 million per Costco ring per year, or about
+A\$20 million per year across ten new rings nationally. Limiting
+the recommendation to specific concentrated markets, rather than
+claiming Costco entry helps everywhere, keeps the position
+defensible. The same evidence also strengthens the ACCC's hand
+when one fuel retailer tries to buy out a discount competitor:
+this study shows that what gets lost in such a deal is real
+downward pressure on local fuel prices, not a theoretical
+concern.
+
+Three operational moves give the recommendation a concrete handle:
+
+1. **Redefine the geography of fuel monitoring.** Move the
+   quarterly reports away from state-wide median reporting and
+   toward a smaller local-market geography (a 5 to 10 km radius
+   around each station cluster). Effects of the magnitude we
+   document here are averaged away at the state level.
+2. **Publish a concentration watchlist.** Identify Australian
+   postcodes where the local fuel market is highly concentrated
+   and no discount-brand entrant is present. The watchlist gives
+   councils, state planners, and prospective entrants a shared
+   evidence base, and gives ACCC advocacy a concrete target list
+   rather than a generic complaint.
+3. **Commit to a 2028 refresh.** Auburn (NSW, opened Aug 2025)
+   and Canberra Airport (ACT, opened Nov 2023) will both have at
+   least two years of post-treatment data by then. Two more clean
+   cases lift the panel from four to six and materially
+   strengthen, or correct, the policy basis above.
 
 ## Back-of-envelope consumer impact
 

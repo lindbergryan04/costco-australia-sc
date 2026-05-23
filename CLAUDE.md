@@ -12,13 +12,9 @@ Read this once at session start, then dive in.
 - **The authoritative spec is [`deliverables/plan_of_attack_combined.pdf`](deliverables/plan_of_attack_combined.pdf).** Every threshold,
   figure, table, and robustness check is pre-committed there. Don't second-guess
   it without checking against the plan first.
-- **The deliverable is the Annual Shrew Review Film Festival entry:** a video +
-  slide deck + the reproducible Quarto analysis (`.qmd` + rendered PDF). All
-  three go on Canvas.
-- **The analysis itself is complete.** [`analysis/costco_australia_sc.qmd`](analysis/costco_australia_sc.qmd)
+- **The analysis is complete.** [`analysis/costco_australia_sc.qmd`](analysis/costco_australia_sc.qmd)
   renders to a 27-page PDF covering §1–§6 of the plan. Pipelines, helpers, and
-  alt-radius inputs are all committed. The slide deck and video have not been
-  started.
+  alt-radius inputs are all committed.
 - **The user is Ryan Lindberg** (lindbergryan04@gmail.com), macOS. He cares
   about precision, doesn't want re-litigation of settled choices, and reads the
   rendered PDF carefully — visible defects matter.
@@ -298,7 +294,7 @@ Claude Code's default worktree creation branches off whatever branch you're
 on, NOT off `main`. If you want a clean branch off main, check out main first
 or use `git worktree add` explicitly.
 
-## What's done, what's left
+## Current state
 
 The analysis is complete and on `main`:
 
@@ -310,20 +306,9 @@ The analysis is complete and on `main`:
   `fit_one_costco_robust()`.
 - `.qmd` covers §1–§6, renders cleanly end-to-end on a fresh environment.
 
-Outstanding deliverables (separate from the analysis):
-
-- **Slide deck** (PDF or PPT).
-- **Video** (15 min cap, all members speak, recorded together).
-- **Canvas submission** bundling video + slides + `.qmd` + rendered PDF.
-
-The video and slide deck both depend on knowing the section size N (number of
-project groups in Ryan's section, checked on Canvas "People" tab) because the
-video length formula is `min(15, 120/N)` minutes, played at 1.5× if `120/N < 8`.
-
 ## Where to find things
 
 - **Authoritative spec:** [`deliverables/plan_of_attack_combined.pdf`](deliverables/plan_of_attack_combined.pdf)
-- **Video assignment:** `~/Desktop/mgt159_temp/main_group_project_film_festival_entry.pdf`
 - **Repo layout:** [`README.md`](README.md)
 - **Reproduction details:** [`analysis/README.md`](analysis/README.md)
 - **Section 1 artifacts:** [`section_1/`](section_1/)

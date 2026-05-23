@@ -1867,8 +1867,8 @@ Our analysis found one clean case (Perth Airport: a sustained
 competitor-price reduction of about 3 ¢/L over six years, robust
 to dropping the COVID period), one corroborating sensitivity
 check (Casuarina at a 10 km radius: -4.5 ¢/L), and two
-inconclusive but not contradictory cases. Both clean cases are in
-WA. At Perth Airport, the price drop we can attribute
+inconclusive but not contradictory cases. Both supporting cases
+are in WA. At Perth Airport, the price drop we can attribute
 specifically to Costco is closer to
 `r round(pa_costco_specific_gap_cents, 1)` ¢/L, because some of
 the 3 ¢/L was already happening in nearby postcodes before Costco

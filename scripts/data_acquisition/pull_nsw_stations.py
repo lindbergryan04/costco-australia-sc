@@ -7,9 +7,9 @@ Uses 2 API calls total:
      this single response contains every station's id, name, address, brand,
      postcode AND lat/lng, plus its current price.
 
-Output: australia/data/stations/nsw_stations.json  (full station catalog with coords)
+Output: data/stations/nsw_stations.json  (full station catalog with coords)
 
-Credentials are read from australia/_local/.nsw_credentials.json (git-ignored).
+Credentials are read from _local/.nsw_credentials.json (run from repo root).
 """
 
 import datetime as dt
@@ -19,11 +19,11 @@ import subprocess
 import sys
 import uuid
 
-CRED_PATH = "australia/_local/.nsw_credentials.json"
+CRED_PATH = "_local/.nsw_credentials.json"
 OAUTH_URL = ("https://api.onegov.nsw.gov.au/oauth/client_credential/"
              "accesstoken?grant_type=client_credentials")
 PRICES_URL = "https://api.onegov.nsw.gov.au/FuelPriceCheck/v1/fuel/prices"
-OUTPUT = "australia/data/stations/nsw_stations.json"
+OUTPUT = "data/stations/nsw_stations.json"
 
 
 def main():

@@ -48,10 +48,10 @@ def section(title):
 
 def main():
     # Load
-    donors = list(csv.DictReader(open("australia/data/sc_inputs/donor_pool.csv")))
-    donor_meta = list(csv.DictReader(open("australia/data/sc_inputs/donor_metadata.csv")))
-    treated = list(csv.DictReader(open("australia/data/sc_inputs/treated_units.csv")))
-    treated_meta = list(csv.DictReader(open("australia/data/sc_inputs/treated_metadata.csv")))
+    donors = list(csv.DictReader(open("data/sc_inputs/donor_pool.csv")))
+    donor_meta = list(csv.DictReader(open("data/sc_inputs/donor_metadata.csv")))
+    treated = list(csv.DictReader(open("data/sc_inputs/treated_units.csv")))
+    treated_meta = list(csv.DictReader(open("data/sc_inputs/treated_metadata.csv")))
 
     print(f"Loaded:")
     print(f"  donor_pool.csv:        {len(donors):>7,} rows")

@@ -2,11 +2,11 @@
 Build a unified station-coordinate lookup for NSW + WA + QLD.
 
 Sources:
-  NSW: live FuelCheck API snapshot (australia/data/stations/nsw_stations.json)
-  WA:  live FuelWatch API snapshot (australia/data/stations/wa_stations.json)
+  NSW: live FuelCheck API snapshot (data/stations/nsw_stations.json)
+  WA:  live FuelWatch API snapshot (data/stations/wa_stations.json)
   QLD: extracted from historical CSVs (which already include lat/lng)
 
-Output: australia/data/stations/station_coords.csv
+Output: data/stations/station_coords.csv
 Schema: state, station_id, name, address, suburb, postcode, lat, lng
 
 Matching strategy for historical records (NSW/WA):
@@ -36,7 +36,7 @@ def main():
 
     # NSW from live API
     print("Loading NSW FuelCheck stations...")
-    with open("australia/data/stations/nsw_stations.json") as f:
+    with open("data/stations/nsw_stations.json") as f:
         nsw = json.load(f)
     for s in nsw.get("stations", []):
         loc = s.get("location") or {}
@@ -61,7 +61,7 @@ def main():
 
     # WA from live API
     print("Loading WA FuelWatch stations...")
-    with open("australia/data/stations/wa_stations.json") as f:
+    with open("data/stations/wa_stations.json") as f:
         wa = json.load(f)
     for s in wa:
         addr = s.get("address") or {}
@@ -80,7 +80,7 @@ def main():
     # QLD from historical CSVs (extract unique stations)
     print("Extracting QLD stations from historical CSVs...")
     qld_seen = {}
-    for f in sorted(glob.glob("australia/_local/cache/qld/*.csv")):
+    for f in sorted(glob.glob("_local/cache/qld/*.csv")):
         with open(f, encoding="utf-8", errors="replace") as fh:
             reader = csv.DictReader(fh)
             for row in reader:
@@ -110,7 +110,7 @@ def main():
 
     fields = ["state", "station_id", "name", "name_norm", "address",
               "suburb", "postcode", "lat", "lng"]
-    out = "australia/data/stations/station_coords.csv"
+    out = "data/stations/station_coords.csv"
     with open(out, "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=fields)
         w.writeheader()

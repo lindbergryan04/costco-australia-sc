@@ -1,11 +1,9 @@
 """Regenerate Section 1 plot 05 (treated event studies) with the validated
 treatment dates from data/sc_inputs/treated_metadata.csv.
 
-This is a worktree-local helper; section_1/describe_data.py uses
-australia/-prefixed paths and depends on the registry cache, neither of
-which is available here. This script reads only the already-built treated
-panel and metadata, so it has no cache dependency. Re-run after any
-change to treatment dates.
+Lightweight alternative to section_1/describe_data.py: reads only the
+already-built treated panel and metadata, so it has no raw-cache
+dependency. Re-run after any change to treatment dates.
 
 State-median overlay: this script reads section_1/state_median_monthly.csv
 (written as a side-artifact by describe_data.py). If that file is not

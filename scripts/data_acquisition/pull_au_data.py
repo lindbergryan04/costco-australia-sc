@@ -2,7 +2,7 @@
 Pull historical fuel price data for the three states with usable Costco
 events: NSW (FuelCheck), WA (FuelWatch), QLD (Fuel Price Reporting).
 
-Each state's data goes into australia/_local/cache/{state}/{filename}.
+Each state's data goes into _local/cache/{state}/{filename} (run from repo root).
 
 Strategy:
   - NSW: monthly XLSX, fetched from data.nsw.gov.au CKAN API (Aug 2016+).
@@ -29,7 +29,7 @@ import sys
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-CACHE = "australia/_local/cache"
+CACHE = "_local/cache"
 WORKERS = 4
 MAX_RETRIES = 3
 

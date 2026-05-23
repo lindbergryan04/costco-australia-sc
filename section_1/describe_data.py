@@ -3,15 +3,15 @@ Section 1: Raw Data Description.
 
 Single-script pipeline that produces every Section 1 artifact:
 
-  australia/section_1/raw_counts.csv             (a + d) rows, vars, unique units per registry
-  australia/section_1/unit_of_observation.md     (b)
-  australia/section_1/time_periods.csv           (c)
-  australia/section_1/summary_statistics.csv     (e) on key analysis variables
-  australia/section_1/data_quality.md            (f)
-  australia/section_1/plots/01_price_histogram.png
-  australia/section_1/plots/02_unleaded_median_over_time.png
-  australia/section_1/plots/03_distance_to_costco_hist.png
-  australia/section_1/plots/05_treated_event_studies.png
+  section_1/raw_counts.csv             (a + d) rows, vars, unique units per registry
+  section_1/unit_of_observation.md     (b)
+  section_1/time_periods.csv           (c)
+  section_1/summary_statistics.csv     (e) on key analysis variables
+  section_1/data_quality.md            (f)
+  section_1/plots/01_price_histogram.png
+  section_1/plots/02_unleaded_median_over_time.png
+  section_1/plots/03_distance_to_costco_hist.png
+  section_1/plots/05_treated_event_studies.png
 
 All visualizations are at the postcode-month level (per group decision).
 Outcome focuses on regular unleaded only (per group decision).
@@ -33,11 +33,11 @@ from matplotlib.dates import YearLocator, DateFormatter
 
 # Use the robust NSW reader (handles string-date schemas in 2020-2023 files
 # and the 2024+ no-title-row variant).
-sys.path.insert(0, "australia/scripts")
+sys.path.insert(0, "scripts")
 from _nsw_reader import iter_nsw_data_rows
 
 
-OUT = "australia/section_1"
+OUT = "section_1"
 
 # Treated Costcos (4 with adequate pre/post data)
 COSTCOS_TREATED = [
@@ -92,7 +92,7 @@ def is_unleaded_wa(p):  return str(p).strip().upper() == "ULP"
 # ----------------------------------------------------------------------------
 
 def scan_nsw_meta():
-    files = sorted(glob.glob("australia/_local/cache/nsw/*.xlsx"))
+    files = sorted(glob.glob("_local/cache/nsw/*.xlsx"))
     print(f"  NSW: scanning {len(files)} files for metadata...")
     n_obs = 0
     n_cols = 8  # NSW schema is fixed at 8 columns across all variants
@@ -127,7 +127,7 @@ def scan_nsw_meta():
 
 
 def scan_qld_meta():
-    files = sorted(glob.glob("australia/_local/cache/qld/*.csv"))
+    files = sorted(glob.glob("_local/cache/qld/*.csv"))
     print(f"  QLD: scanning {len(files)} files for metadata...")
     n_obs = 0
     n_cols = 0
@@ -168,7 +168,7 @@ def scan_qld_meta():
 
 
 def scan_wa_meta():
-    files = sorted(glob.glob("australia/_local/cache/wa/*.csv"))
+    files = sorted(glob.glob("_local/cache/wa/*.csv"))
     print(f"  WA: scanning {len(files)} files for metadata...")
     n_obs = 0
     n_cols = 0
@@ -219,7 +219,7 @@ def load_station_classification():
     """Return: (state, name_norm, postcode) → {treated_for, min_dist_any, lat, lng}."""
     by_key = {}
     by_name = defaultdict(list)
-    with open("australia/data/stations/station_coords.csv") as f:
+    with open("data/stations/station_coords.csv") as f:
         for r in csv.DictReader(f):
             try:
                 lat = float(r["lat"]); lng = float(r["lng"])
@@ -249,7 +249,7 @@ def ingest_panel(by_key, by_name):
     aggregation."""
     out = []
     # NSW (using the robust reader)
-    files = sorted(glob.glob("australia/_local/cache/nsw/*.xlsx"))
+    files = sorted(glob.glob("_local/cache/nsw/*.xlsx"))
     print(f"  NSW: ingesting {len(files)} files (unleaded only)...")
     for fi, f in enumerate(files):
         for (name, address, suburb, postcode, brand, fuel_code,
@@ -273,7 +273,7 @@ def ingest_panel(by_key, by_name):
         if (fi+1) % 20 == 0:
             print(f"    NSW {fi+1}/{len(files)}; total: {len(out):,}")
     # QLD
-    files = sorted(glob.glob("australia/_local/cache/qld/*.csv"))
+    files = sorted(glob.glob("_local/cache/qld/*.csv"))
     print(f"  QLD: ingesting {len(files)} files...")
     for fi, f in enumerate(files):
         with open(f, encoding="utf-8", errors="replace") as fh:
@@ -295,7 +295,7 @@ def ingest_panel(by_key, by_name):
         if (fi+1) % 20 == 0:
             print(f"    QLD {fi+1}/{len(files)}; total: {len(out):,}")
     # WA
-    files = sorted(glob.glob("australia/_local/cache/wa/*.csv"))
+    files = sorted(glob.glob("_local/cache/wa/*.csv"))
     print(f"  WA: ingesting {len(files)} files...")
     for fi, f in enumerate(files):
         with open(f, encoding="utf-8", errors="replace") as fh:
@@ -459,7 +459,7 @@ Composite unique key: `Costco_name`.
 Schema: `name, state, suburb, postcode, lat, lng, treatment_date,
 months_pre, months_post, status, notes`.
 
-Source file: `australia/data/catalogs/usable_costcos.csv`.
+Source file: `data/catalogs/usable_costcos.csv`.
 
 ## Analysis panel (constructed in Phase B)
 For the synthetic-control analysis, the raw price-change/snapshot data is
@@ -668,8 +668,8 @@ def load_sc_analysis_prices():
     Costco-months. This is the analysis-sample distribution Section 1's
     Figure 1 and summary-stats table describe."""
     prices = []
-    for path in ("australia/data/sc_inputs/donor_pool.csv",
-                 "australia/data/sc_inputs/treated_units.csv"):
+    for path in ("data/sc_inputs/donor_pool.csv",
+                 "data/sc_inputs/treated_units.csv"):
         try:
             with open(path) as f:
                 for r in csv.DictReader(f):
@@ -831,7 +831,7 @@ def plot_treated_event_studies(panel, state_median_series=None):
     decode the post-2020 surge."""
     treated = []
     try:
-        with open("australia/data/sc_inputs/treated_units.csv") as f:
+        with open("data/sc_inputs/treated_units.csv") as f:
             for r in csv.DictReader(f):
                 treated.append({
                     "costco_key": r["costco_key"],
@@ -958,7 +958,7 @@ def main():
     plot_treated_event_studies(panel, state_median_series=state_median)
     print()
 
-    print("Section 1 artifacts ready in australia/section_1/.")
+    print("Section 1 artifacts ready in section_1/.")
 
 
 if __name__ == "__main__":

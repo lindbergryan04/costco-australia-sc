@@ -312,7 +312,7 @@ state_median |>
 ## Treated 5 km rings versus state medians
 
 ```{r fig-treated-vs-state}
-#| fig-cap: "Treated 5 km ring mean unleaded price (colored solid) versus the state median across all reporting postcodes (gray dashed) for each of the four treated Costcos. The vertical red dashed line marks the validated treatment date. Shaded gray: the COVID demand collapse (Mar–Sep 2020); dotted vertical: Russia's invasion of Ukraine (24 Feb 2022); pale-blue shading: the AU federal fuel-excise cut (30 Mar – 28 Sep 2022). The state-median overlay is a descriptive level reference, not the synthetic-control counterfactual."
+#| fig-cap: "Treated 5 km ring mean unleaded price (colored solid) versus the state median across all reporting postcodes (gray dashed) for each of the four treated Costcos. The vertical red dashed line marks the validated treatment date. Shaded gray: the COVID demand collapse (Mar–Sep 2020); dotted vertical: Russia's invasion of Ukraine (24 Feb 2022); pale-blue shading: the AU federal fuel-excise cut (30 Mar – 28 Sep 2022). The state-median overlay is a naive comparator that previews §3's formal causal comparison; §3 replaces it with pre-period-weighted donor postcodes and adds inference."
 #| fig-height: 7
 #| fig-width: 8
 
@@ -358,6 +358,16 @@ make_panel <- function(costco_name) {
 panels <- map(costco_order, make_panel)
 wrap_plots(panels, ncol = 1)
 ```
+
+The panels above preview what §3 will formalize: Perth Airport's 5 km
+ring tracks the WA median closely through 2022 and diverges downward
+from 2023 onward, while Coomera, Casuarina, and Lake Macquarie track
+their respective state medians throughout. The state median is a
+weaker comparator than a synthetic control — it doesn't match
+pre-period level or composition and supports no inference — so §3
+replaces it with pre-period-weighted donor postcodes and adds a 95% CI
+on the post-treatment gap. The figures here are framing, not the
+formal result.
 
 ## Summary statistics
 
@@ -925,6 +935,15 @@ Macquarie's treated line runs slightly above its synthetic in the
 post-period (about +1.5 ¢/L); §4 RC7 shows the surrounding 5–20 km
 donut going strongly negative, so the wrong-sign Lake Macquarie
 headline is best read as a 5 km artifact.
+
+**Relation to §1.** The Perth Airport divergence above was already
+visible in @fig-treated-vs-state's treated-versus-state-median panel.
+§3 replaces the unconditional WA median with pre-period-weighted donor
+postcodes and adds donor-permutation inference; the post-treatment
+visual story is the same. What §3 adds at Perth Airport is rigor
+(pre-period matching, a 95% CI, state-shock absorption via same-state
+donors), not the discovery of an effect that was hidden in the raw
+data.
 
 ## Donor weights per treated Costco
 

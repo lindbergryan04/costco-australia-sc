@@ -57,7 +57,7 @@ See [`README.md`](README.md) for the full tree. Quick map:
 │   ├── costco_australia_sc.qmd    ← the main document
 │   ├── costco_australia_sc.pdf    ← rendered PDF
 │   ├── _sc_helpers.R              ← tidysynth wrappers
-│   ├── renv.lock                  ← 109 pinned R packages
+│   ├── renv.lock                  ← 110 pinned R packages
 │   └── README.md                  ← reproduction details
 ├── scripts/
 │   ├── _nsw_reader.py             ← shared NSW XLSX parser
@@ -115,22 +115,46 @@ alt geometries via `build_sc_inputs_alt_radii.py`, producing
 `data/sc_inputs_alt/<variant>/`. Those four subdirectories are also uploaded to
 the same Dropbox folder under a top-level `sc_inputs_alt/` subfolder.
 
-## Reproduction
+## Reproducing the analysis with Claude
 
-The `.qmd` reads its inputs from a public Dropbox folder, so you don't need the
-raw cache to knit. From a fresh R session:
+The top-level [`README.md`](README.md) tells users that the recommended way
+to reproduce this analysis is to ask Claude. This section is how to handle
+that ask.
+
+The `.qmd` reads its inputs from a public Dropbox folder, so you don't need
+the raw cache to knit. From a fresh R session:
 
 ```bash
 cd analysis
-Rscript -e 'renv::restore()'           # one-time: install 109 pinned packages (~5–10 min)
-quarto render costco_australia_sc.qmd  # ~10–15 min first run; <1 min cached
+Rscript -e 'renv::restore()'           # one-time: install 110 pinned packages (~5–10 min cold; seconds if the user's global renv cache is warm)
+quarto render costco_australia_sc.qmd  # ~20 min cold (renv + sc_fits + §4 fits + LaTeX); <1 min once chunks are cached
 ```
 
 Rendering produces `analysis/costco_australia_sc.pdf` and pulls a ~3.7 MB ZIP
-of input CSVs from Dropbox into a session-tempdir cache.
+of input CSVs from Dropbox into a session-tempdir cache. The R-chunk cache
+lives at `analysis/costco_australia_sc_cache/` (gitignored), so the first
+render on a clean clone always pays the full cold cost once.
 
-**Re-running the pipeline** (only needed if `data/sc_inputs*/` is stale or
-missing, requires the 2.2 GB raw cache):
+If R, Quarto, or LuaLaTeX aren't installed, tell the user the exact
+`brew install` / `quarto install tinytex` commands rather than installing
+silently — installs require user confirmation on macOS.
+
+Common follow-ups after the first render:
+
+- **"Explain §X."** — read the rendered PDF or the `.qmd` directly; both
+  are self-contained.
+- **"Change a robustness check."** — find the relevant `rcN_*` chunk in
+  the `.qmd`. For RC2/RC3/RC7 (alt-geometry) changes, see "Re-build SC
+  inputs at a new geometry" below — those require regenerating the input
+  CSVs, uploading them to Dropbox, and adding the variant name to the
+  `alt_variants` vector in the setup chunk.
+- **"Re-fit a Costco."** — every §4 fit goes through
+  `fit_one_costco_robust()` in `_sc_helpers.R`. Add new fits in their own
+  chunks; never edit the `sc_fits` chunk body, since that invalidates the
+  ~10-min cache for all four headline fits plus their donor permutations.
+
+**Re-running the upstream pipeline** (only needed if `data/sc_inputs*/` is
+stale or you want to verify the build; requires the 2.2 GB raw cache):
 
 ```bash
 # from the repo root
@@ -138,8 +162,8 @@ python3 scripts/synthetic_control_input/build_sc_inputs.py            # headline
 python3 scripts/synthetic_control_input/build_sc_inputs_alt_radii.py  # four §4 variants (~16 min)
 ```
 
-After re-running the pipeline, upload the new CSVs to the Dropbox folder so the
-`.qmd` can find them. The Dropbox URL is hardcoded near the top of the
+After re-running the pipeline, upload the new CSVs to the Dropbox folder so
+the `.qmd` can find them. The Dropbox URL is hardcoded near the top of the
 `.qmd`'s setup chunk.
 
 ## How the analysis is structured
@@ -276,10 +300,9 @@ or use `git worktree add` explicitly.
 
 ## What's done, what's left
 
-Done (committed on `claude/frosty-gagarin-7fa287` / `claude/fervent-galileo-00048a`,
-which point at the same SHA):
+The analysis is complete and on `main`:
 
-- Plan of Attack §1–§3 PDFs in `deliverables/`.
+- Plan of Attack §1–§3 PDFs in `deliverables/` (and the combined PDF).
 - Pipeline parameterized; orchestrator for §4 alt-radius variants.
 - Sixteen alt-radius CSVs committed under `data/sc_inputs_alt/` and uploaded
   to the Dropbox folder.
@@ -287,7 +310,7 @@ which point at the same SHA):
   `fit_one_costco_robust()`.
 - `.qmd` covers §1–§6, renders cleanly end-to-end on a fresh environment.
 
-Not done:
+Outstanding deliverables (separate from the analysis):
 
 - **Slide deck** (PDF or PPT).
 - **Video** (15 min cap, all members speak, recorded together).

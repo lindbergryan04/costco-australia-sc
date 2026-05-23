@@ -914,14 +914,17 @@ wrap_plots(traj_panels, ncol = 1)
 ```
 
 **Reading the panels.** Perth Airport (top) shows the treated 5 km
-ring sitting below its synthetic across much of the post-2020 window,
-the clearest visual gap among the four. Casuarina and Coomera have
-treated and synthetic tracking closely through both pre- and
-post-periods, consistent with little detectable competitor response
-in their 5 km rings. Lake Macquarie's treated line runs slightly
-above its synthetic in the post-period (about +1.5 ¢/L); §4 RC7
-shows the surrounding 5–20 km donut going strongly negative, so the
-wrong-sign Lake Macquarie headline is best read as a 5 km artifact.
+ring tracking its synthetic closely through 2020–2022 and then
+diverging downward from roughly 2023 onward, opening into the clearest
+visual gap among the four by the end of the window. The late onset is
+unusual for a retail-competition response and is flagged as a
+limitation in §6. Casuarina and Coomera have treated and synthetic
+tracking closely through both pre- and post-periods, consistent with
+little detectable competitor response in their 5 km rings. Lake
+Macquarie's treated line runs slightly above its synthetic in the
+post-period (about +1.5 ¢/L); §4 RC7 shows the surrounding 5–20 km
+donut going strongly negative, so the wrong-sign Lake Macquarie
+headline is best read as a 5 km artifact.
 
 ## Donor weights per treated Costco
 
@@ -1863,10 +1866,10 @@ to enter concentrated local markets, and treat the documented
 Costco price-discipline effect as a substantive consideration in
 fuel-retail merger review.**
 
-Our analysis found one clean case (Perth Airport: a sustained
-competitor-price reduction of about 3 ¢/L over six years, robust
-to dropping the COVID period), one corroborating sensitivity
-check (Casuarina at a 10 km radius: -4.5 ¢/L), and two
+Our analysis found one clean case (Perth Airport: a competitor-price
+reduction averaging about 3 ¢/L over the six-year post-treatment
+window, robust to dropping the COVID period), one corroborating
+sensitivity check (Casuarina at a 10 km radius: -4.5 ¢/L), and two
 inconclusive but not contradictory cases. Both supporting cases
 are in WA. At Perth Airport, the price drop we can attribute
 specifically to Costco is closer to
@@ -1875,10 +1878,17 @@ the 3 ¢/L was already happening in nearby postcodes before Costco
 opened. The effect also shrinks if we widen the ring we measure:
 at 8 km instead of 5 km, the Perth Airport gap drops to about
 1 ¢/L, which means the result depends on exactly how the local
-market is drawn. Even with those caveats, the ACCC now has direct
-evidence, from Australian fuel markets rather than from overseas
-studies, that Costco entry can durably reduce incumbent fuel
-prices in at least some concentrated Australian local markets.
+market is drawn. The effect is also concentrated late in the
+post-period: the 5 km ring tracks the synthetic closely from
+Costco entry through 2022, and only diverges materially from 2023
+onward — a longer lag than the retail-gas competition literature
+typically documents, so we cannot rule out that part of the
+divergence reflects a 2023 local shock to the Perth Airport ring
+rather than a delayed Costco response (§6). Even with those
+caveats, the ACCC now has direct evidence, from Australian fuel
+markets rather than from overseas studies, that Costco entry can
+plausibly reduce incumbent fuel prices in at least some
+concentrated Australian local markets.
 
 This evidence is not strong enough for the ACCC to mandate
 anything, but it is strong enough to advocate, and advocacy is
@@ -2002,7 +2012,7 @@ should be read in that scope.
 
 # Limitations
 
-Five issues sit outside what §4 can resolve. They bound the scope of
+Six issues sit outside what §4 can resolve. They bound the scope of
 the §5 recommendation.
 
 **n = 4 treated Costcos.** The headline mean averages across four
@@ -2030,6 +2040,23 @@ pandemic, but the residual concern is that the synthetic
 counterfactual is built from a small WA donor pool (36 postcodes) and
 the WA-wide pandemic shock may not have been absorbed identically
 across donor and treated postcodes. We report both specifications.
+
+**Perth Airport late-window onset.** Perth Airport's 5 km ring tracks
+its synthetic closely from Costco entry through 2022 and only
+diverges materially from 2023 onward — roughly three years
+post-treatment. This is a longer lag than the retail-gas competition
+literature typically documents (Houde 2012, Eckert 2013 find
+competitor responses on the order of months, not years). The same
+2023 onset is visible against the WA state median in
+@fig-treated-vs-state, which means the divergence is specific to the
+Perth Airport ring rather than a WA-wide shock — but synthetic
+control identifies *that* the treated ring diverged from its WA
+donors, not *why*. An unrelated 2023 local shock to the 5 km ring
+(a new low-cost entrant, an incumbent station closing, brand-mix
+turnover) would produce the same pattern and would be wrongly
+attributed to Costco. The headline conclusion in §5 should be read
+with this timing concern in mind, alongside the geometry sensitivity
+in RC2 and the Costco-specific decomposition in §5.2.
 
 **Six Costcos excluded.** Marsden Park, Auburn, Canberra Airport,
 Casula, North Lakes, and Ipswich do not satisfy the $\geq$ 24 pre /

@@ -1,11 +1,16 @@
 # Analysis: Costco Australia synthetic-control study
 
-This folder contains the Quarto analysis for the MGT159 group project. The
-`.qmd` reads its inputs from a public Dropbox folder, fits four
-synthetic-control models (one per treated Costco), and produces the figures
-and tables that support the project's headline causal claim. The analysis
-follows the pre-committed plan in [`../deliverables/plan_of_attack_combined.pdf`](../deliverables/plan_of_attack_combined.pdf)
+This folder contains the Quarto analysis for the MGT159 group project.
+[`costco_australia_sc.qmd`](costco_australia_sc.qmd) reads its inputs from a
+public Dropbox folder, fits four synthetic-control models (one per treated
+Costco) plus the §4 robustness checks, and renders the figures and tables
+that support the project's headline causal claim. The analysis follows
+the pre-committed plan in [`../deliverables/plan_of_attack_combined.pdf`](../deliverables/plan_of_attack_combined.pdf)
 section-by-section.
+
+The recommended way to reproduce this analysis is to ask Claude — see the
+top-level [`README.md`](../README.md) and [`CLAUDE.md`](../CLAUDE.md).
+This file documents the manual path.
 
 ## File layout
 
@@ -13,60 +18,53 @@ section-by-section.
 analysis/
 ├── README.md                     ← this file
 ├── costco_australia_sc.qmd       ← main analysis (R-engine Quarto)
-├── costco_australia_sc.pdf       ← rendered output
+├── costco_australia_sc.pdf       ← rendered output (committed)
 ├── _sc_helpers.R                 ← tidysynth wrappers (fit, gaps, CIs, summaries)
-├── renv.lock                     ← pinned R package versions
+├── renv.lock                     ← 110 pinned R package versions
 ├── .Rprofile                     ← auto-activates renv on R startup
-└── renv/
-    ├── activate.R                ← renv bootstrap (committed)
-    ├── settings.json             ← renv config (committed)
-    ├── .gitignore                ← excludes library/ etc.
-    └── library/                  ← project-scoped package install (gitignored)
+├── renv/                         ← renv bootstrap (library/ gitignored)
+└── costco_australia_sc_cache/    ← knitr chunk cache (gitignored, built on first knit)
 ```
 
-## How to reproduce
+## Prerequisites
 
-### Prerequisites
+| Tool   | Version         | Install                                            |
+|--------|-----------------|----------------------------------------------------|
+| R      | 4.5+            | `brew install r` or download from [r-project.org](https://cran.r-project.org/) |
+| Quarto | 1.4+            | `brew install --cask quarto`                       |
+| LaTeX  | any             | `quarto install tinytex` (recommended)             |
+| renv   | bootstrap auto-installs | n/a — `renv/activate.R` handles it          |
 
-| Tool         | Version                          | Install                                                              |
-|--------------|----------------------------------|----------------------------------------------------------------------|
-| R            | 4.5+ (4.1+ minimum for `\|>`)     | `brew install r` or download from [r-project.org](https://cran.r-project.org/) |
-| Quarto       | 1.4+                             | `brew install --cask quarto` (enter sudo password when prompted)     |
-| LaTeX        | Any TeX distribution             | `quarto install tinytex` (recommended)                               |
-| renv         | 1.x                              | `install.packages("renv")` in R                                      |
+Verify: `R --version`, `quarto --version`.
 
-Verify each tool: `R --version`, `quarto --version`.
+## Restore R packages (one-time)
 
-### Restore R packages (one-time, ~5–10 min)
-
-R dependencies are pinned in `analysis/renv.lock` for reproducibility. From
-the `analysis/` directory:
+From the `analysis/` directory:
 
 ```r
 renv::restore()
 ```
 
-This installs the exact package versions (108 packages, including `tidyverse`,
-`tidysynth`, `lubridate`, `kableExtra`, `patchwork`, `scales`, `glue`, plus
-all transitive dependencies) into a project-scoped library at
-`analysis/renv/library/`. The restore reads `renv.lock`; renv's global cache
-(under `~/Library/Caches/org.R-project.R/`) speeds up subsequent restores on
-the same machine to seconds.
+This installs the 110 pinned packages (`tidyverse`, `tidysynth`, `lubridate`,
+`kableExtra`, `patchwork`, `scales`, `glue`, plus transitive deps) into a
+project-scoped library at `renv/library/`. Cold restore is ~5-10 min; renv's
+global cache (under `~/Library/Caches/org.R-project.R/`) makes subsequent
+restores on the same machine finish in seconds.
 
-When you open R in the `analysis/` folder, `.Rprofile` auto-activates the
-project library so package loads pick the pinned versions, not whatever is
-in your global R library.
+`.Rprofile` auto-activates the project library when you open R in
+`analysis/`, so package loads pick the pinned versions rather than the
+global R library.
 
-### Add or update a package
+To add or update a package later:
 
 ```r
 renv::install("packagename")
 renv::snapshot()             # writes the new version into renv.lock
 ```
 
-Then commit the updated `renv.lock` along with the code change.
+Then commit the updated `renv.lock` alongside the code change.
 
-### Knit the .qmd
+## Knit the .qmd
 
 From the repository root:
 
@@ -74,22 +72,26 @@ From the repository root:
 quarto render analysis/costco_australia_sc.qmd
 ```
 
-This produces `analysis/costco_australia_sc.pdf`. On the first knit, the
-setup chunk downloads the input data from Dropbox (~750 KB) and unzips it
-into a session-local tempdir; subsequent knits reuse the cached copy.
-Synthetic-control fits will eventually be cached by knitr, so iterative
-edits to prose only re-render the affected chunks.
+Output: [`costco_australia_sc.pdf`](costco_australia_sc.pdf).
+
+Timing:
+
+- **First render on a clean clone: ~20 min.** The setup chunk downloads the
+  input data from Dropbox (~3.7 MB ZIP) to a session-local tempdir, and
+  every fit chunk runs from scratch. The `sc_fits` chunk (four headline
+  Costcos + donor permutations for 95% CIs) is ~10 min on its own; the
+  seven §4 robustness fits add another ~10 min.
+- **Cached re-render: <1 min.** All fit chunks have `#| cache: true`, so
+  prose edits and figure tweaks reuse the cached fits. The cache lives at
+  `costco_australia_sc_cache/` (gitignored) and survives `quarto render`
+  invocations.
 
 ## Where the data comes from
 
-The `.qmd` reads five CSV inputs from a single public Dropbox folder share:
-
-> https://www.dropbox.com/scl/fo/g7lhsenilo4lza6dwnukq/AMIiPcOy1uysFMJtSC3eqrg?rlkey=ozb016wrtnrg9qj9yw789xkyg&st=73xiohe7&dl=1
-
-The trailing `dl=1` makes Dropbox return the folder contents as a ZIP, which
-the `.qmd` downloads once at the top, extracts to a session-local tempdir,
-and reads from there. One URL is cleaner than five for a multi-file analysis
-and matches the "single Dropbox link to the data" spirit of the assignment.
+The `.qmd` reads its inputs from a single public Dropbox folder share
+(URL hardcoded at the top of the setup chunk). The trailing `dl=1`
+returns the folder contents as a ZIP, which the `.qmd` downloads once,
+extracts to a session-local tempdir, and reads from there.
 
 | File                       | Source in the main repo  | Purpose in the `.qmd`                                    |
 |----------------------------|--------------------------|----------------------------------------------------------|
@@ -99,32 +101,23 @@ and matches the "single Dropbox link to the data" spirit of the assignment.
 | `donor_metadata.csv`       | `data/sc_inputs/`        | Per-postcode suburb labels (used for Figure 2 in §3.3)   |
 | `state_median_monthly.csv` | `section_1/`             | Per-state monthly median unleaded price (Figures 2 & 3)  |
 
+In addition, the Dropbox folder has a top-level `sc_inputs_alt/`
+subfolder mirroring `data/sc_inputs_alt/` — the four geometry variants
+used by the §4 robustness checks (`3km_15km/`, `8km_30km/`,
+`casuarina_10km/`, `donut_5_20km/`), each containing the same four input
+CSVs at that geometry.
+
 These CSVs are the analysis-ready outputs of
-`scripts/synthetic_control_input/build_sc_inputs.py`. Re-running that
-pipeline from raw state-registry archives requires the 1.86 GB Dropbox
-archive linked from the main repo's `README.md`; that step is upstream of
-the `.qmd` and not exercised on a clean-machine knit.
+`scripts/synthetic_control_input/build_sc_inputs.py` (and
+`build_sc_inputs_alt_radii.py` for the §4 variants). Re-running those
+scripts requires the 2.2 GB raw archive linked from the main repo's
+`README.md`; that step is upstream of the `.qmd` and not exercised on a
+clean-machine knit.
 
-## Where we are right now
+## §4 robustness checks
 
-| Stage                                                                | Status                                                                |
-|----------------------------------------------------------------------|-----------------------------------------------------------------------|
-| Plan of Attack §1–§3                                                  | ✅ Submitted as PDFs in `../deliverables/`                            |
-| SC input CSVs at 5 km / 20 km radii                                  | ✅ Built (`data/sc_inputs/`) and uploaded to Dropbox folder            |
-| `_sc_helpers.R` (tidysynth wrappers + extractors + summaries)        | ✅ Written                                                            |
-| `costco_australia_sc.qmd` (§1 complete; §2–§6 stubbed)               | ✅ Written                                                            |
-| renv set up + lockfile snapshotted (108 packages pinned)             | ✅ Done                                                               |
-| First clean knit + visual sanity check                               | ⏳ Pending — needs Quarto installed (`brew install --cask quarto`)    |
-| Fill in §2 sample-construction narrative + funnel table              | ⏳ Pending                                                            |
-| Fill in §3 SC analysis (Figures 1–3, Tables 1–2)                     | ⏳ Pending                                                            |
-| Alt-radius SC inputs (3/15, 8/30, Casuarina 10 km, 5–20 km donut)    | ⏳ Pending — only after the 5 km / 20 km headline fits look right     |
-| §4 robustness checks 1–7                                              | ⏳ Pending                                                            |
-| §5 recommendation + §6 limitations                                    | ⏳ Pending                                                            |
-| Clean-environment reproducibility knit (no local data)               | ⏳ Pending                                                            |
-
-## Pointers back to the main repo
-
-- Pipeline that built `data/sc_inputs/`: [`scripts/synthetic_control_input/build_sc_inputs.py`](../scripts/synthetic_control_input/build_sc_inputs.py)
-- Verifier for the donor pool: [`scripts/synthetic_control_input/verify_sc_inputs.py`](../scripts/synthetic_control_input/verify_sc_inputs.py)
-- Section 1 artifacts (counts, plots, data-quality notes): [`../section_1/`](../section_1/)
-- Section 3 illustrative-only plots from the plan-of-attack: [`../section_3/`](../section_3/)
+Every §4 fit goes through `fit_one_costco_robust()` in `_sc_helpers.R`,
+which tries `predictors = "yearly_means"` first and falls back to
+`"overall_mean"` when the QP solver returns a singular matrix. Returns
+`NULL` if both strategies fail; the table chunks check for `NULL` and
+emit `NA` / `(fit failed)` rather than crashing.

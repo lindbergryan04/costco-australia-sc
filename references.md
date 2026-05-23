@@ -169,7 +169,9 @@ competitor stations to lower their retail fuel prices?).
 Notes on ambiguity: the Petrolspy entries for Casuarina and Lake
 Macquarie are best understood as supporting context rather than primary
 opening-date sources; they are listed under treatment-date validation
-because that is the only place their information is consulted. The
-`pysyncon` library and `reportlab` are inferred from the project
-description (synthetic control + ReportLab-built PDFs); they are tools
-rather than cited works.
+because that is the only place their information is consulted.
+
+Tools (not cited works): the synthetic-control fits use R's `tidysynth`
+package (the plan-of-attack mentions `pysyncon`, but the implementation
+moved to R for course-homework parity — see `CLAUDE.md`). The
+plan-of-attack PDFs are built with `reportlab`.

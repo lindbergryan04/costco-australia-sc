@@ -1,5 +1,5 @@
 # Local-only — never commit.
-# Holds the 1.86 GB raw-API cache, NSW FuelCheck credentials, and
+# Holds the 2.2 GB raw-API cache, NSW FuelCheck credentials, and
 # superseded historical analyses.
 _local/
 

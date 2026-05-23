@@ -14,12 +14,34 @@ and renders to [`analysis/costco_australia_sc.pdf`](analysis/costco_australia_sc
 ### Recommended: ask Claude
 
 The fastest path is to clone the repo, open Claude Code at the root, and
-ask Claude to render the analysis. Claude reads
-[`CLAUDE.md`](CLAUDE.md) — which documents the tool prerequisites, the
-`renv` workflow, knit timing, and the gotchas — and drives the steps
-itself. This is the recommended method because Claude handles
-environment setup, watches for the known LaTeX/Quarto pitfalls, and can
-explain the analysis section-by-section as it goes.
+paste the prompt below. Claude reads [`CLAUDE.md`](CLAUDE.md) — which
+documents the tool prerequisites, the `renv` workflow, knit timing, and
+the gotchas — and drives the steps itself.
+
+````
+I just cloned this repo and want to reproduce the full analysis end-to-end.
+Please:
+
+1. Read CLAUDE.md to understand the project layout, conventions, and gotchas.
+2. Check that R 4.5+, Quarto 1.4+, and a LaTeX engine are installed. If any
+   are missing, tell me the install command for my OS and wait for me to
+   confirm before proceeding.
+3. From analysis/, run renv::restore() to install the 110 pinned R packages
+   into the project library. Cold install is 5-10 min; finishes in seconds
+   if the renv cache is already populated.
+4. Render analysis/costco_australia_sc.qmd. The cold render is ~20 min
+   (renv restore + tidysynth fits for §3 and §4 + LaTeX). Let it finish —
+   don't kill it early. Subsequent renders are <1 min once the chunk cache
+   is populated.
+5. Confirm analysis/costco_australia_sc.pdf was produced. Report any
+   warnings or errors from the render output.
+6. Summarize the §5 ACCC recommendation in 3-4 sentences so I can verify
+   the analysis ran correctly.
+````
+
+This is the recommended method because Claude handles environment setup,
+watches for the known LaTeX/Quarto pitfalls (documented in `CLAUDE.md`),
+and can explain the analysis section-by-section as it goes.
 
 ### Manual
 

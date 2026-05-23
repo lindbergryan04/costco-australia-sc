@@ -86,42 +86,41 @@ A postcode was **excluded** if any of:
 ⚠️ Casuarina has only 3.2 average stations within 5 km, a sparse treated
 market. This is geographic: south-of-Perth Casuarina is a coastal residential
 area with relatively few competing fuel stations. The treated mean will be
-noisier for Casuarina than the others; consider whether to use a wider
-radius (10 km) for that one Costco specifically.
+noisier for Casuarina than the others. This concern is addressed in §4
+robustness check **RC3**, which refits Casuarina at a 10 km treated radius
+using the inputs in [`../sc_inputs_alt/casuarina_10km/`](../sc_inputs_alt/casuarina_10km/).
 
-## How to use these in synthetic control
+## Robustness-check variants
 
-Standard workflow with `pysyncon` or `SyntheticControlMethods` (Python):
+Four alternate-geometry input bundles live in
+[`../sc_inputs_alt/`](../sc_inputs_alt/), one per §4 robustness check:
 
-```python
-import pandas as pd
+| Variant            | Used by                                              |
+|--------------------|------------------------------------------------------|
+| `3km_15km/`        | RC2 narrow geometry (3 km treated, 15 km donor buffer) |
+| `8km_30km/`        | RC2 wide geometry (8 km / 30 km)                     |
+| `casuarina_10km/`  | RC3 Casuarina-specific 10 km treated radius          |
+| `donut_5_20km/`    | RC7 spatial placebo on the 5-20 km annulus           |
 
-treated = pd.read_csv("treated_units.csv")
-donors  = pd.read_csv("donor_pool.csv")
-treated_meta = pd.read_csv("treated_metadata.csv")
+Each variant contains the same four CSVs documented above, just built at
+a different geometry. They're produced by
+`scripts/synthetic_control_input/build_sc_inputs_alt_radii.py`.
 
-# Pivot to wide format that SC libraries expect (rows=time, cols=units)
-treated_wide = treated.pivot(index="date", columns="costco_key",
-                              values="mean_price_cents")
-donor_wide   = donors.pivot(index="date", columns="postcode",
-                              values="mean_price_cents")
+## How these are used
 
-# Run synthetic control once per Costco, restricting donors to same state:
-for ckey, meta in treated_meta.set_index("costco_key").iterrows():
-    state = meta["state"]
-    treatment_date = meta["treatment_date"]
-    state_donors = donors[donors["state"] == state]["postcode"].unique()
-    # ... fit synthetic weights on pre-period, project counterfactual, etc.
-```
+The analysis (`analysis/costco_australia_sc.qmd`) reads these CSVs via
+R + `tidysynth`, fits one synthetic control per treated Costco
+(restricted to same-state donors), then aggregates. Per-Costco rather
+than pooled fits because:
 
-## Frequency of fit
+1. Each Costco's treated trajectory is distinct (different pre-trends,
+   different metro), so a single pooled fit would average over real
+   heterogeneity.
+2. Per-Costco fits enable per-Costco donor-permutation inference, which
+   is the standard way to assess significance with synthetic control.
+3. The spec's example (Anglou, Sanders & Stamatopoulos 2025) does the
+   same: one synthetic-control fit per treated state, then aggregates.
 
-We recommend running synthetic control **separately for each of the 4 Costcos**
-(rather than pooling them), then aggregating effects. Reasons:
-
-1. Each Costco's treated trajectory is distinct (different pre-trends, different
-   metro), so a single pooled fit would average over real heterogeneity.
-2. Per-Costco fits enable per-Costco placebo tests, which is the standard way
-   to assess statistical significance with synthetic control.
-3. The spec's example (Anglou, Sanders & Stamatopoulos 2025) does exactly this:
-   one synthetic-control fit per treated state, then aggregates.
+See [`analysis/_sc_helpers.R`](../../analysis/_sc_helpers.R) for the
+fit wrappers and [`analysis/costco_australia_sc.qmd`](../../analysis/costco_australia_sc.qmd)
+for how they're invoked.

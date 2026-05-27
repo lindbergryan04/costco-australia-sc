@@ -1,10 +1,13 @@
 """Build the four presentation plots.
 
+Plot files are numbered by the slide they appear on, matching script.txt.
+Each plot is intentionally UNTITLED — titles live on the pptx slides.
+
 Outputs to presentation/plots/:
-  01_all_stations.png            All gas stations across NSW/QLD/WA
-  02_costcos_rings_donors.png    Costcos + 5km rings + donor pool (+ Coomera inset)
-  03_perth_airport_trajectories.png  Treated vs synthetic with 95% donor-permutation CI
-  04_forest_plot.png             Per-Costco effects with 95% CIs
+  06_all_stations.png            (slide 6)  All AU gas stations
+  08_costcos_rings_donors.png    (slide 8)  Costcos + 5/20 km rings + donors
+  09_perth_airport_trajectories.png (slide 9)  Treated vs synthetic + 95% CI
+  10_forest_plot.png             (slide 10) Per-Costco effects + 95% CIs
 
 Data sources:
   data/stations/station_coords.csv
@@ -149,33 +152,22 @@ ax.scatter(
     s=2.2, c=COL_STATION, alpha=0.55, linewidths=0,
 )
 
-# Title + stat callout
-fig.text(
-    0.02, 0.965,
-    "Gas stations in our analysis",
-    fontsize=24, fontweight="bold", color=COL_TEXT,
-)
-fig.text(
-    0.02, 0.925,
-    f"{len(stations_clean):,} stations across NSW, QLD, and WA "
-    "(state fuel-price registries, 2016–2026)",
-    fontsize=13, color="#444444",
-)
-
-# Per-state counts as a small stat strip
+# Per-state counts as a small stat strip at the bottom of the figure.
+# Kept because it's data context, not a title; the slide title can still
+# say "6,084 stations across NSW/QLD/WA" and this complements it.
 state_counts = (
     stations_clean.groupby("state").size().reindex(["NSW", "QLD", "WA"])
 )
 labels = [f"{s}: {n:,}" for s, n in state_counts.items()]
 fig.text(
-    0.02, 0.06, "    ".join(labels),
+    0.02, 0.04, "    ".join(labels),
     fontsize=12, color="#555555",
 )
 
-plt.savefig(OUT / "01_all_stations.png", dpi=200, bbox_inches="tight",
+plt.savefig(OUT / "06_all_stations.png", dpi=200, bbox_inches="tight",
             facecolor="white")
 plt.close(fig)
-print(f"  -> {OUT / '01_all_stations.png'}")
+print(f"  -> {OUT / '06_all_stations.png'}")
 
 
 # ====================================================================
@@ -231,19 +223,6 @@ for _, row in treated_meta.iterrows():
         fontsize=11, fontweight="bold", color=COL_COSTCO,
         arrowprops=dict(arrowstyle="-", color=COL_COSTCO, lw=0.8),
     )
-
-# Title
-fig.text(
-    0.02, 0.965,
-    "Identification strategy",
-    fontsize=24, fontweight="bold", color=COL_TEXT,
-)
-fig.text(
-    0.02, 0.925,
-    "Four treated Costcos compared against 196 donor postcodes "
-    "(>20 km from any Costco)",
-    fontsize=13, color="#444444",
-)
 
 # Legend
 legend_handles = [
@@ -344,10 +323,10 @@ ax_in.set_title(
 mark_inset(ax, ax_in, loc1=2, loc2=3, fc="none",
            ec=COL_BORDER, lw=0.7, linestyle="--")
 
-plt.savefig(OUT / "02_costcos_rings_donors.png", dpi=200,
+plt.savefig(OUT / "08_costcos_rings_donors.png", dpi=200,
             bbox_inches="tight", facecolor="white")
 plt.close(fig)
-print(f"  -> {OUT / '02_costcos_rings_donors.png'}")
+print(f"  -> {OUT / '08_costcos_rings_donors.png'}")
 
 
 # ====================================================================
@@ -359,10 +338,10 @@ pa = pd.read_csv(PRES / "data" / "perth_airport_trajectory.csv",
 pa = pa.sort_values("time_unit").reset_index(drop=True)
 treatment_date = pa["treatment_date"].iloc[0]
 
-# Explicit axes positioning so title/subtitle have guaranteed breathing
-# room above the plot. [left, bottom, width, height] in figure coords.
-fig = plt.figure(figsize=(12, 7.0))
-ax = fig.add_axes([0.085, 0.11, 0.88, 0.68])
+# Explicit axes positioning. No figure-level title — the slide title
+# will handle that — so the plot area fills the figure vertically.
+fig = plt.figure(figsize=(12, 6.0))
+ax = fig.add_axes([0.085, 0.13, 0.88, 0.82])
 
 # CI band (donor-permutation, pointwise gap CI added back to synthetic)
 ax.fill_between(
@@ -425,23 +404,10 @@ for sp in ("top", "right"):
 ax.legend(loc="upper left", frameon=False, fontsize=10.5,
           bbox_to_anchor=(0.0, 0.97))
 
-# Title + subtitle, placed above the plot area with clear breathing room
-fig.text(
-    0.02, 0.93,
-    "Perth Airport: actual vs synthetic competitor prices",
-    fontsize=22, fontweight="bold", color=COL_TEXT,
-)
-fig.text(
-    0.02, 0.87,
-    "The treated trajectory diverges below its counterfactual "
-    "after Costco opens — and stays there.",
-    fontsize=12, color="#444444",
-)
-
-plt.savefig(OUT / "03_perth_airport_trajectories.png", dpi=200,
+plt.savefig(OUT / "09_perth_airport_trajectories.png", dpi=200,
             bbox_inches="tight", facecolor="white")
 plt.close(fig)
-print(f"  -> {OUT / '03_perth_airport_trajectories.png'}")
+print(f"  -> {OUT / '09_perth_airport_trajectories.png'}")
 
 
 # ====================================================================
@@ -453,10 +419,10 @@ fx = pd.read_csv(PRES / "data" / "effect_summary.csv")
 # Order rows for visual hierarchy: strongest negative at top
 fx = fx.sort_values("mean_post_gap_cents").reset_index(drop=True)
 
-# Use explicit subplots_adjust so title / subtitle / legend each have
-# guaranteed space rather than fighting tight_layout.
-fig = plt.figure(figsize=(12, 6.5))
-ax = fig.add_axes([0.20, 0.22, 0.55, 0.55])  # [left, bottom, width, height]
+# No figure-level title — the slide handles that. The legend lives at
+# the bottom of the figure, so axes claim the upper ~75% of the canvas.
+fig = plt.figure(figsize=(12, 5.5))
+ax = fig.add_axes([0.20, 0.20, 0.55, 0.75])  # [left, bottom, width, height]
 
 ys = np.arange(len(fx))[::-1]  # so top row is at top of plot
 
@@ -515,19 +481,6 @@ ax.set_axisbelow(True)
 for sp in ("top", "right", "left"):
     ax.spines[sp].set_visible(False)
 
-# Title + subtitle, positioned with explicit figure coords
-fig.text(
-    0.02, 0.93,
-    "Effect of Costco entry on competitor fuel prices",
-    fontsize=22, fontweight="bold", color=COL_TEXT,
-)
-fig.text(
-    0.02, 0.875,
-    "Point estimate and 95% donor-permutation CI per treated Costco.  "
-    "Negative = competitors charged less than the counterfactual.",
-    fontsize=12, color="#444444",
-)
-
 # Color legend below the plot
 legend_handles = [
     mpatches.Patch(color=COL_COSTCO,
@@ -535,7 +488,7 @@ legend_handles = [
     mpatches.Patch(color="#9A9A9A",
                    label="Inconclusive (CI straddles or near zero)"),
     mpatches.Patch(color="#B85042",
-                   label="Wrong-sign concern (5 km artifact — see §4)"),
+                   label="Wrong-sign concern (5 km artifact, see §4)"),
 ]
 fig.legend(
     handles=legend_handles, loc="lower center", ncol=3,
@@ -543,9 +496,9 @@ fig.legend(
     bbox_to_anchor=(0.5, 0.02),
 )
 
-plt.savefig(OUT / "04_forest_plot.png", dpi=200,
+plt.savefig(OUT / "10_forest_plot.png", dpi=200,
             bbox_inches="tight", facecolor="white")
 plt.close(fig)
-print(f"  -> {OUT / '04_forest_plot.png'}")
+print(f"  -> {OUT / '10_forest_plot.png'}")
 
 print("\nDone. All four PNGs in", OUT)

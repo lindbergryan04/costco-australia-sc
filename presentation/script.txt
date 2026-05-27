@@ -1,0 +1,393 @@
+================================================================
+COSTCO AUSTRALIA — SHREW REVIEW FILM FESTIVAL
+Slide-by-slide blueprint (what each slide TEACHES the audience)
+================================================================
+Target runtime: ~7:12  (6:45 of content + ~25 sec slack)
+Required structure per assignment §3.1–§3.9
+Recap of "what makes a winning video" we're optimizing for:
+  - Narrative arc (problem -> finding -> recommendation)
+  - Main finding front and center, not buried
+  - Every minute earned, no filler
+  - Selective: 3 result figures, not 7
+  - Recommendation grounded in data + back-of-envelope
+  - Every group member has a speaking role
+  - No AI slop, no pie charts, no raw output dumps
+
+Visuals legend:
+  [BUILT]   already in presentation/plots/
+  [TODO]    we'd need to create this
+  [TEXT]    no chart, just typography/iconography
+
+================================================================
+SLIDE 1 — Title / cold open                              ~10 sec
+================================================================
+TEACHES:  Who we are, what the project is, who we're advising.
+
+VISUAL:   [TEXT] Big project title ("Does Costco discipline
+          Australian fuel prices?"), subtitle "Advising the
+          Australian Competition and Consumer Commission",
+          group member names. A small AU silhouette with a
+          single fuel-pump icon makes the topic instantly
+          legible without crowding the slide.
+
+NOTES:    Open with a hook line, not a name dump. Something
+          like: "Australian drivers spend X billion dollars a
+          year on fuel — does a single new entrant actually
+          move the price?"  Then introduce the team in one
+          line and hand off.
+
+================================================================
+SLIDE 2 — Why this matters                               ~30 sec
+================================================================
+TEACHES:  The ACCC is Australia's competition regulator;
+          fuel prices are politically charged; big-box
+          discounter entry is one of the cleanest natural
+          experiments for testing whether new entrants
+          discipline incumbent prices.
+
+VISUAL:   [BUILT] presentation/plots/02_market_concentration.png
+          Three horizontal bars, one per ACCC retail category:
+            * Major company brands (top 4):           40%
+              Ampol, bp, Viva Energy/Shell, Coles/Reddy Express
+            * Other large retail brands (next 5):     34%
+              7-Eleven, EG Group, Chevron/Caltex,
+              United Petroleum, On The Run
+            * Smaller independents (30+ brands):       26%
+              Liberty, Metro Petroleum, Speedway,
+              X-Convenience, Puma, COSTCO (highlighted blue),
+              and ~25 more
+          Callout box: "Top 9 ACCC-monitored brands account
+          for 74% of retail volume."
+          Source: ACCC, Market composition through Australia's
+          evolving petroleum industry, November 2025 (data for
+          2023-24). The ACCC publishes only category aggregates,
+          not per-brand shares — these numbers ARE the
+          authoritative figures, not estimates.
+
+NOTES:    Stylized facts here, not analysis. Keep the slide
+          uncluttered — one image + one sentence beats a
+          bullet list. End with the bridge: "...which raises
+          a sharp empirical question:"
+
+================================================================
+SLIDE 3 — The question                                   ~25 sec
+================================================================
+TEACHES:  The precise causal question: does Costco
+          gas-station entry into a local AU market cause
+          nearby competitor stations to lower their prices?
+
+VISUAL:   [BUILT] presentation/plots/03_market_unit.png
+          Minimal conceptual schematic: a Costco dot at the
+          center, ~10 competitor dots scattered inside a
+          5 km coral ring, a few faint gray "outside the
+          market" dots at the edges. Sits beside the
+          question text on the slide and answers "what is
+          the unit of analysis?" without restating the
+          question.
+
+NOTES:    Read the question once, slowly. Note that
+          "competitor stations" is the dependent variable —
+          we're NOT measuring whether Costco itself is
+          cheap (it is, by design), we're measuring whether
+          its arrival forces everyone else nearby to drop
+          their prices too.
+
+================================================================
+SLIDE 4 — Preview of findings                            ~25 sec
+================================================================
+TEACHES:  The bottom line up front: one clean negative case
+          (Perth Airport, ~3 cents/L), three cases that are
+          inconclusive or wrong-sign artifacts, and a
+          recommendation to lower entry barriers.
+
+VISUAL:   [TEXT] Three result callouts arranged vertically
+          or in a row:
+            * green check  -> Perth Airport: ~3 c/L drop
+            * gray  ?      -> 3 other Costcos: inconclusive
+            * blue  arrow  -> Recommendation: lower barriers
+          No chart on this slide — we want the figure reveal
+          on slides 9 and 10 to land.
+
+NOTES:    This is the BLUF (bottom line up front) slide the
+          professor explicitly requires. Frame it as: "Here
+          is where we end up; the next 5 minutes are how we
+          got there." Resist the temptation to caveat —
+          plenty of room for nuance later.
+
+================================================================
+SLIDE 5 — The data                                       ~30 sec
+================================================================
+TEACHES:  Where the data came from, the exact time window,
+          the scope/scale, and which variables we use.
+
+VISUAL:   [BUILT] presentation/plots/05_data_pipeline.png
+          Four-stage flow: 3 state registries -> monthly
+          station-level panel (6,084 stations x ~96 months)
+          -> treated + donor SC inputs (4 + 196) ->
+          synthetic control fits.
+
+VARIABLES Just the ones we actually use:
+USED:       station_id, postcode, lat, lng, date,
+            unleaded_price
+          Constructed:
+            mean_price_cents = mean of all transactions for
+                               a given station-month
+
+NOTES:    Walk the audience LEFT to RIGHT through the
+          diagram. Hit the three sources by name once, then
+          the one constructed variable. Don't read the dates
+          off — they're on the slide.
+
+================================================================
+SLIDE 6 — What the data looks like                       ~25 sec
+================================================================
+TEACHES:  Geographic footprint of the universe we're
+          sampling from: stations cluster along the
+          populated eastern and southwestern coasts; we have
+          coverage everywhere there's a fuel market worth
+          studying.
+
+VISUAL:   [BUILT] presentation/plots/06_all_stations.png
+          AU map with all 6,084 stations as small dots,
+          state outlines, WA/QLD/NSW labels, per-state
+          counts (NSW 3,281 / QLD 1,882 / WA 921) at the
+          bottom.
+
+NOTES:    One sentence on what's visible: "Every dot is one
+          fuel station that reports price data to its state
+          regulator." Then point to the coast clustering and
+          the empty interior so the audience understands why
+          our donor pool is concentrated near population.
+
+================================================================
+SLIDE 7 — Sample construction                            ~30 sec
+================================================================
+TEACHES:  How we went from the full universe to the
+          analysis sample. Two filters that matter:
+            * Costcos: 10 candidates -> 4 with enough pre
+              AND post coverage.
+            * Postcodes: all AU -> 196 donors that are
+              > 20 km from ANY Costco (so they're not
+              already feeling the treatment).
+
+VISUAL:   [TODO] Two side-by-side funnels OR one
+          two-column waterfall. Each column shows the count
+          before and after with the reason for exclusion as
+          a small caption. Ask Claude to build this if we
+          want it.
+
+NOTES:    Do NOT walk through every filter from the qmd.
+          Hit the two big ones above. The audience should
+          come away thinking "principled, not arbitrary."
+          Excluded Costcos (Marsden Park, Auburn, Canberra
+          Airport, Casula, North Lakes, Ipswich) are too
+          recent or too old — name them only if asked.
+
+================================================================
+SLIDE 8 — Identification strategy                        ~40 sec
+================================================================
+TEACHES:  Synthetic control in plain English. For each
+          treated Costco, we build a fake "Perth Airport
+          that never got a Costco" as a weighted blend of
+          WA donor postcodes whose pre-Costco price
+          trajectory matches Perth Airport's. After Costco
+          opens, the gap between the real and the synthetic
+          is the causal effect — under the assumption that
+          nothing else changed differently between Perth
+          Airport and its synthetic.
+
+VISUAL:   [BUILT] presentation/plots/08_costcos_rings_donors.png
+          AU map showing 4 treated Costcos (blue dots with
+          labels), the 5 km treated ring (coral, visible in
+          the Coomera inset), the 20 km exclusion ring
+          (dashed gray), and the 196 donor postcodes
+          (green). Inset zooms into Coomera so the rings
+          are legible.
+
+NOTES:    The slide is the explanation; use the inset to
+          make the geometry concrete. Allude to the method
+          ("synthetic control") in one breath; do NOT
+          explain the optimization. The professor explicitly
+          warns against "drowning in technical details."
+
+================================================================
+SLIDE 9 — Headline result: Perth Airport                 ~50 sec
+================================================================
+TEACHES:  The picture that, if a viewer remembered nothing
+          else, would convey our main finding. Before Feb
+          2020, synthetic and actual track each other
+          tightly — proof the counterfactual is credible.
+          After Costco opens, actual drops ~3.4 c/L below
+          synthetic and STAYS there for 6 years. The 95%
+          CI on the mean effect excludes zero; the MSPE
+          ratio (post-period gap / pre-period noise) is
+          4.31, well above the standard credibility bar.
+
+VISUAL:   [BUILT] presentation/plots/09_perth_airport_trajectories.png
+          Actual (solid blue) vs synthetic (dashed) with
+          donor-permutation 95% CI band, vertical dotted
+          line at Feb 2020 (Costco opens), annotation box
+          with mean gap and MSPE ratio.
+
+NOTES:    Walk the audience through the axes BEFORE the
+          finding: x = months from 2018 to 2026, y = mean
+          unleaded price within 5 km of Perth Airport, in
+          cents/L. Then point at the pre-period tracking,
+          THEN the treatment line, THEN the divergence.
+          This is the longest single slide — earn it by
+          slowing down.
+
+================================================================
+SLIDE 10 — Does it generalize?                           ~45 sec
+================================================================
+TEACHES:  Honest read across all 4 treated Costcos. Only
+          Perth Airport produces a clean negative effect
+          with a CI that excludes zero. Casuarina is
+          borderline (degenerate-narrow CI is a known
+          artifact of having few stations in the ring).
+          Coomera and Lake Macquarie are inconclusive —
+          Lake Macquarie is actually wrong-signed, but
+          that's traceable to a 5 km geometry artifact
+          (see RC7 in the qmd).
+
+VISUAL:   [BUILT] presentation/plots/10_forest_plot.png
+          Forest plot with one row per Costco: point
+          estimate as a colored dot, 95% CI as a horizontal
+          bar, zero line marked vertically, dots colored by
+          sign of effect.
+
+NOTES:    Resist any temptation to spin. The professor
+          explicitly penalizes overselling weak results.
+          The honest "1 of 4 clean" framing makes the Perth
+          Airport effect MORE credible, not less, because
+          we're not cherry-picking.
+
+================================================================
+SLIDE 11 — Did we just get lucky?                        ~35 sec
+================================================================
+TEACHES:  One robustness check shown in full + a quick
+          name-check of the other six we ran. Headline
+          check: placebo-in-time. We pretend Costco arrived
+          12 months EARLY at Perth Airport, refit the
+          synthetic to the truncated pre-period, and check
+          whether a fake "effect" appears at the fake date.
+          It doesn't — the trajectories cross the fake date
+          smoothly and only diverge at the real one.
+
+VISUAL:   [TODO] Same trajectory shape as slide 9 but with
+          the vertical line at Feb 2019 (12 months early)
+          and the synthetic tracking through it. Easy to
+          extract from the qmd cache; ask Claude to build.
+          Below the plot, a small horizontal strip listing
+          the other 6 checks (alt radii, drop COVID,
+          donor-permutation CIs, alt Casuarina geometry,
+          12-mo holdout, spatial placebo) all marked with
+          a check.
+
+NOTES:    The point of this slide isn't the methodology —
+          it's the credibility statement. "We tried to break
+          our own finding seven different ways; here's the
+          most intuitive one, and the rest are in our
+          analysis document."
+
+================================================================
+SLIDE 12 — Recommendation + back-of-envelope             ~35 sec
+================================================================
+TEACHES:  The concrete action for the ACCC: use advocacy
+          and merger-review powers to lower zoning/lease
+          barriers that delay or block big-box fuel-retail
+          entry. And treat the Costco price-discipline
+          effect as a substantive consideration in any
+          fuel-retail merger review.
+
+          Back-of-envelope (replace placeholders with real
+          numbers from qmd §5 before recording):
+            ~3 c/L savings
+            x ~[VOL] ML/yr of fuel within a treated 5 km ring
+            x ~[N] additional treated metros if barriers fall
+            = ~$[TOTAL] M/yr in consumer savings.
+
+VISUAL:   [TEXT] Stat-callout layout: each line of the
+          back-of-envelope shown as a big number with a
+          small label, separated by multiplication signs.
+          Final dollar figure highlighted. To the right,
+          two or three bullet-style recommendations.
+
+NOTES:    Be specific. Vague recommendations get marked
+          down. Read the math out loud — it's surprisingly
+          impactful when the audience sees the arithmetic
+          assemble in front of them.
+
+================================================================
+SLIDE 13 — Limitations                                   ~25 sec
+================================================================
+TEACHES:  What we CAN'T claim from this data:
+            1. Only one truly clean case (Perth Airport).
+               Generalizing to "Costco always disciplines"
+               is overreach.
+            2. The 5 km ring is a researcher choice;
+               results at 3 km and 8 km differ somewhat.
+            3. We identify the EFFECT, not the MECHANISM.
+               Is it price-matching? Volume discounts?
+               Consumer perception? Our data can't tell.
+            4. QLD and NSW Costcos need more post-treatment
+               months before a clean read is possible.
+
+VISUAL:   [TEXT] Clean text list, one limitation per row,
+          small icon (warning triangle / map pin / question
+          mark / clock) next to each for visual hierarchy.
+
+NOTES:    Don't dwell — 25 seconds tops. The honest framing
+          here protects against the "overselling" deduction.
+          Close with a one-line bridge to the closing slide
+          or "thank you, questions?"
+
+================================================================
+TIME BUDGET RECAP
+================================================================
+Slide  1 (title)            10 sec
+Slide  2 (why matters)      30 sec
+Slide  3 (question)         25 sec
+Slide  4 (preview)          25 sec
+Slide  5 (data pipeline)    30 sec
+Slide  6 (all-stations)     25 sec
+Slide  7 (sample)           30 sec
+Slide  8 (identification)   40 sec
+Slide  9 (headline)         50 sec
+Slide 10 (generalize)       45 sec
+Slide 11 (robustness)       35 sec
+Slide 12 (recommendation)   35 sec
+Slide 13 (limitations)      25 sec
+----------------------------------
+TOTAL                      405 sec  =  6:45
+Slack                       27 sec  (transitions, breaths)
+==================================
+HARD TARGET                432 sec  =  7:12
+
+================================================================
+SPEAKING ROLE HANDOFFS (rough — adjust for group size)
+================================================================
+For a 4-person group, natural breakpoints:
+  Person A: slides  1  - 4   (intro + preview)
+  Person B: slides  5  - 7   (data + sample)
+  Person C: slides  8  - 10  (method + results)
+  Person D: slides 11 - 13   (robustness + recommendation)
+
+For 3-person: combine A+B (1-7) and D (11-13).
+For 5-person: split C into 8-9 and 10.
+
+================================================================
+WHAT WE STILL NEED TO BUILD
+================================================================
+1. Slide 4 visual:   Three result-callout badges.
+2. Slide 7 visual:   Two-funnel sample-construction diagram.
+3. Slide 11 visual:  Placebo-in-time plot for Perth Airport
+                     (extract from qmd cache, similar to plot 9
+                     but with fake treatment date at Feb 2019).
+4. Slide 12 visual:  Back-of-envelope stat-callout layout
+                     (needs real numbers plugged in from qmd §5).
+5. Slide 13 visual:  Limitations text-list with icons.
+
+Slide 1 is typography/icon only — no plot needed.
+Slides 2, 3, 5, 6, 8, 9, 10 already have BUILT plots ready
+to drop in.

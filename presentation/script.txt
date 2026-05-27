@@ -1,96 +1,304 @@
 ================================================================
-COSTCO AUSTRALIA — SHREW REVIEW FILM FESTIVAL
-Slide-by-slide blueprint (what each slide TEACHES the audience)
+COSTCO AUSTRALIA  ·  SHREW REVIEW FILM FESTIVAL
+Spoken script (slide-by-slide, by speaker)
 ================================================================
-Target runtime: ~7:12  (6:45 of content + ~25 sec slack)
-Required structure per assignment §3.1–§3.9
-Recap of "what makes a winning video" we're optimizing for:
-  - Narrative arc (problem -> finding -> recommendation)
-  - Main finding front and center, not buried
-  - Every minute earned, no filler
-  - Selective: 3 result figures, not 7
-  - Recommendation grounded in data + back-of-envelope
-  - Every group member has a speaking role
-  - No AI slop, no pie charts, no raw output dumps
+Target runtime: ~7:00 of content (~25 sec slack)
+Hits all required sections from the assignment PDF (§3.1–§3.9).
 
-Visuals legend:
-  [BUILT]   already in presentation/plots/
-  [TODO]    we'd need to create this
-  [TEXT]    no chart, just typography/iconography
+Speaker assignments (roughly equal time, narrative-clean breaks):
+  Speaker 1  ->  slides  1 – 4   (setup + preview)              ~90 sec
+  Speaker 2  ->  slides  5 – 8   (data + sample + method)      ~130 sec
+  Speaker 3  ->  slides  9 – 10  (headline result + spread)     ~100 sec
+  Speaker 4  ->  slides 11 – 13  (robustness + ask + limits)   ~100 sec
+                                                                ------
+                                                                ~420 sec  (~7:00)
 
-================================================================
-SLIDE 1 — Title / cold open                              ~10 sec
-================================================================
-TEACHES:  Who we are, what the project is, who we're advising.
+Rules of engagement:
+  - Be CONCRETE. Exact counts, exact dates, no "approximately"
+    where a number exists. (Per PDF §3.3.A.)
+  - Walk the audience through every figure: axes first, then the
+    pattern, then what it means for the ACCC. (Per PDF §3.6.)
+  - No reading bullets off the slide. The slides carry the
+    visuals; you carry the story.
+  - Where the data is mixed, say so. The "1 of 4 clean" framing
+    is the honest read and protects against the overselling
+    deduction (PDF §6).
 
-VISUAL:   [TEXT] Big project title ("Does Costco discipline
-          Australian fuel prices?"), subtitle "Advising the
-          Australian Competition and Consumer Commission",
-          group member names. A small AU silhouette with a
-          single fuel-pump icon makes the topic instantly
-          legible without crowding the slide.
+Plots used (all in presentation/plots/):
+  02_market_concentration.png   05_data_pipeline.png
+  03_market_unit.png            06_all_stations.png
+  04_bluf_preview.png           07_sample_funnel.png
+  08_costcos_rings_donors.png   09_costco_trajectories.png
+  10_forest_plot.png            11_placebo_robustness.png
+  Slides 1, 12, 13 are typography only (no PNG).
 
-NOTES:    Open with a hook line, not a name dump. Something
-          like: "Australian drivers spend X billion dollars a
-          year on fuel — does a single new entrant actually
-          move the price?"  Then introduce the team in one
-          line and hand off.
 
 ================================================================
-SLIDE 2 — Why this matters                               ~30 sec
+SPEAKER 1  ·  slides 1 – 4  (setup + preview)
 ================================================================
-TEACHES:  The ACCC is Australia's competition regulator;
-          fuel prices are politically charged; big-box
-          discounter entry is one of the cleanest natural
-          experiments for testing whether new entrants
-          discipline incumbent prices.
 
-VISUAL:   [BUILT] presentation/plots/02_market_concentration.png
-          Three horizontal bars, one per ACCC retail category:
-            * Major company brands (top 4):           40%
-              Ampol, bp, Viva Energy/Shell, Coles/Reddy Express
-            * Other large retail brands (next 5):     34%
-              7-Eleven, EG Group, Chevron/Caltex,
-              United Petroleum, On The Run
-            * Smaller independents (30+ brands):       26%
-              Liberty, Metro Petroleum, Speedway,
-              X-Convenience, Puma, COSTCO (highlighted blue),
-              and ~25 more
-          Callout box: "Top 9 ACCC-monitored brands account
-          for 74% of retail volume."
-          Source: ACCC, Market composition through Australia's
-          evolving petroleum industry, November 2025 (data for
-          2023-24). The ACCC publishes only category aggregates,
-          not per-brand shares — these numbers ARE the
-          authoritative figures, not estimates.
+----------------------------------------------------------------
+SLIDE 1  ·  Title / cold open                           ~10 sec
+----------------------------------------------------------------
+PLOT:    none (title typography on the slide)
 
-NOTES:    Stylized facts here, not analysis. Keep the slide
-          uncluttered — one image + one sentence beats a
-          bullet list. End with the bridge: "...which raises
-          a sharp empirical question:"
+Fuel prices are politically charged in Australia, and the ACCC
+is the country's competition watchdog. The question we tackle:
+when a credible new entrant like Costco opens a gas station,
+does it actually pull nearby competitor prices down? We are
+[NAMES], and our client is the Australian Competition and
+Consumer Commission.
+
+----------------------------------------------------------------
+SLIDE 2  ·  Why this matters                            ~30 sec
+----------------------------------------------------------------
+PLOT:    02_market_concentration.png
+
+Here is the market the ACCC is asked to keep competitive. Four
+major brands, Ampol, BP, Viva or Shell, and Coles or Reddy
+Express, together control 40 percent of national retail fuel
+volume. Five more large retail chains, including 7-Eleven, EG
+Group, and Chevron, add another 34 percent. So nine brands
+together hold 74 percent of the market. Costco shows up in the
+smaller-independents tier, alongside Liberty, Metro, and about
+30 other brands. The empirical question becomes: when a
+credible new entrant like Costco arrives, does the rest of the
+market actually respond? That is what we set out to measure.
+
+----------------------------------------------------------------
+SLIDE 3  ·  The question                                ~25 sec
+----------------------------------------------------------------
+PLOT:    03_market_unit.png
+
+To answer that, we needed to nail down what we mean by the
+local market. Look at the schematic. The blue dot is the
+Costco. Every navy dot inside the 5 kilometer ring is a
+competitor we treat as in the market. Anything beyond 5
+kilometers is outside. Crucially, the price we track is not
+Costco's own. Costco is cheap by design. We are asking whether
+everyone else in the ring lowers their prices when Costco
+shows up.
+
+----------------------------------------------------------------
+SLIDE 4  ·  Preview of findings                         ~25 sec
+----------------------------------------------------------------
+PLOT:    04_bluf_preview.png
+
+Here is where we end up before we walk you through the work.
+At Perth Airport in WA, competitor prices ran about 3.4 cents
+per litre below their synthetic counterfactual, sustained for
+six straight years, with a 95 percent confidence interval that
+excludes zero. The other three Costcos we studied were
+inconclusive, for reasons we will get into. Based on the Perth
+Airport finding, our recommendation to the ACCC is to lower
+the zoning and lease barriers that delay big-box fuel entry.
+Let us walk you through how we got there.
+
 
 ================================================================
-SLIDE 3 — The question                                   ~25 sec
+SPEAKER 2  ·  slides 5 – 8  (data + sample + method)
 ================================================================
-TEACHES:  The precise causal question: does Costco
-          gas-station entry into a local AU market cause
-          nearby competitor stations to lower their prices?
 
-VISUAL:   [BUILT] presentation/plots/03_market_unit.png
-          Minimal conceptual schematic: a Costco dot at the
-          center, ~10 competitor dots scattered inside a
-          5 km coral ring, a few faint gray "outside the
-          market" dots at the edges. Sits beside the
-          question text on the slide and answers "what is
-          the unit of analysis?" without restating the
-          question.
+----------------------------------------------------------------
+SLIDE 5  ·  The data                                    ~30 sec
+----------------------------------------------------------------
+PLOT:    05_data_pipeline.png
 
-NOTES:    Read the question once, slowly. Note that
-          "competitor stations" is the dependent variable —
-          we're NOT measuring whether Costco itself is
-          cheap (it is, by design), we're measuring whether
-          its arrival forces everyone else nearby to drop
-          their prices too.
+Our data comes from three Australian state fuel registries,
+all public. NSW FuelCheck covers December 2016 through January
+2026. QLD Fuel Price Reporting covers December 2018 through
+December 2025. WA FuelWatch covers January 2018 through April
+2026. We clean and aggregate every individual price report
+into a monthly station-level panel of 6,084 unique stations
+across roughly 96 months. From the raw data we use six fields:
+station_id, postcode, latitude, longitude, date, and
+unleaded_price. We construct one variable, mean_price_cents,
+which is the average unleaded price per station per month.
+That panel feeds our synthetic-control estimates.
+
+----------------------------------------------------------------
+SLIDE 6  ·  What the data looks like                    ~25 sec
+----------------------------------------------------------------
+PLOT:    06_all_stations.png
+
+Every dot on this map is one of those 6,084 stations. NSW
+gives us 3,281 stations, QLD gives us 1,882, and WA gives us
+921. The pattern follows population: stations cluster along
+the east coast and around Perth in the southwest, with an
+essentially empty interior. That means our donor pool, the
+postcodes we build counterfactuals from, naturally concentrates
+where Costco lives too.
+
+----------------------------------------------------------------
+SLIDE 7  ·  Sample construction                         ~30 sec
+----------------------------------------------------------------
+PLOT:    07_sample_funnel.png
+
+Two big filters on each side. On the left, all 10 Australian
+Costco fuel stations. We drop 5 with fewer than 24 months of
+pre-opening data, and one more, Auburn, with fewer than 12
+months of post-opening data. That leaves 4 treated Costcos:
+Coomera, Casuarina, Perth Airport, and Lake Macquarie. On the
+right, 1,004 NSW, QLD, and WA postcodes that report unleaded
+prices. We drop 362 within 20 kilometers of any Costco, since
+those are already exposed. We drop 446 more that average fewer
+than 3 stations per month, too noisy to trust monthly. That
+leaves 196 donor postcodes that build our counterfactuals.
+
+----------------------------------------------------------------
+SLIDE 8  ·  Identification strategy                     ~40 sec
+----------------------------------------------------------------
+PLOT:    08_costcos_rings_donors.png
+
+Now how we separate cause from correlation. For each treated
+Costco, we build a synthetic version of it: a weighted blend
+of donor postcodes whose pre-Costco price history matches the
+treated ring as closely as possible. Once Costco opens, the
+gap between the actual prices and the synthetic prices is what
+we attribute to Costco. The identifying assumption is that
+nothing else changed differently between the treated 5 km ring
+and its synthetic blend. On this map you can see the 4 treated
+Costcos as blue dots, each surrounded by a 20 kilometer
+exclusion ring in dashed gray so donors stay clean. The 196
+donor postcodes are the green dots. The inset zooms into
+Coomera so you can see the 5 km treated ring in coral. Donors
+are restricted to the same state as the treated Costco, so any
+state-level shock is absorbed by construction.
+
+
+================================================================
+SPEAKER 3  ·  slides 9 – 10  (headline result + spread)
+================================================================
+
+----------------------------------------------------------------
+SLIDE 9  ·  Headline result (Figure 1)                  ~50 sec
+----------------------------------------------------------------
+PLOT:    09_costco_trajectories.png
+
+This is our main figure. The top panel is Perth Airport, our
+cleanest case. X axis is months from 2018 through 2026. Y
+axis is the mean unleaded price within 5 kilometers of Perth
+Airport, in cents per litre. The solid blue line is the actual
+price competitors charged. The dashed navy line is the
+synthetic counterfactual. The coral band is the 95 percent
+confidence interval from donor permutation. Look at the
+pre-period: actual and synthetic track each other tightly
+through 2018 and 2019. That is the proof our counterfactual
+is credible. The dotted vertical line marks February 2020,
+when Costco opened. After that, actual drops about 3.4 cents
+per litre below synthetic and stays there for six years. The
+MSPE ratio is 4.31, well above the credibility bar. The
+bottom row shows the other three Costcos. Notice the much
+shorter post-windows, and notice that none of them produces a
+clean separation like Perth Airport does.
+
+----------------------------------------------------------------
+SLIDE 10  ·  Does it generalize?                        ~45 sec
+----------------------------------------------------------------
+PLOT:    10_forest_plot.png
+
+Same four results in summary form. Each row is one Costco.
+The dot is the point estimate. The horizontal bar is the 95
+percent confidence interval. The vertical dashed line is zero.
+Only Perth Airport, in blue, has a confidence interval that
+sits squarely below zero and clears our pre-set credibility
+bar. Casuarina looks tight, but that is artificial: its 5 km
+ring contains only about 3 stations on average, so there is
+barely any donor variation to compare against. Coomera is
+inconclusive, with a CI that straddles zero. Lake Macquarie
+comes in wrong-signed, but we trace that to a 5 km geometry
+artifact, documented in our robustness checks. The honest
+read: one of four is clean, and we are not going to claim
+more than the data supports.
+
+
+================================================================
+SPEAKER 4  ·  slides 11 – 13  (robustness + ask + limits)
+================================================================
+
+----------------------------------------------------------------
+SLIDE 11  ·  Did we just get lucky?                     ~35 sec
+----------------------------------------------------------------
+PLOT:    11_placebo_robustness.png
+
+We tried to break our headline finding seven different ways.
+Here is the most intuitive: a placebo in time. We pretend
+Costco arrived 12 months early, in February 2019, refit on
+truncated data, and check whether a fake effect appears at
+the fake date. The honest answer is: partially. The placebo
+gap is about negative 1.96 cents per litre with a CI that
+excludes zero. That means there is some pre-existing downward
+drift in WA prices. But the real post-Costco gap of negative
+3.4 is much larger, so the Costco-incremental effect is
+around negative 1.4 cents per litre. Real, just smaller than
+the headline number. Three more checks worth highlighting,
+each addressing a different concern someone might raise.
+Was this a COVID artifact? We dropped March through December
+2020 and the gap barely moved. Did we get lucky with the
+5 km ring? We re-ran at 3 km and 8 km and the sign and
+magnitude survive. Could Costco be affecting far-away
+stations and contaminating our donors? We tested the 5 to
+20 km donut and saw no comparable price drop. Three more
+checks are in our analysis document.
+
+----------------------------------------------------------------
+SLIDE 12  ·  Recommendation + back-of-envelope          ~35 sec
+----------------------------------------------------------------
+PLOT:    12_recommendation.png
+
+Two concrete recommendations for the ACCC. First, use
+advocacy and merger-review powers to lower the zoning and
+lease barriers that delay big-box fuel entry. Second, treat
+the documented Costco price-discipline effect as a substantive
+consideration in fuel-retail merger review. Back-of-envelope,
+in Australian dollars: a typical 5 kilometer urban ring covers
+roughly 100,000 residents and about 63 million litres of
+competitor fuel per year. At our conservative Costco-specific
+estimate of negative 1.4 cents per litre, that is about
+0.9 million dollars in consumer savings per ring per year. If
+lowering barriers enables ten more credible big-box entries
+nationwide, that scales to roughly 9 million dollars per year
+in aggregate consumer savings. Modest by federal-budget
+standards, real on the ground, and the policy cost is
+essentially the cost of advocacy.
+
+----------------------------------------------------------------
+SLIDE 13  ·  Limitations                                ~25 sec
+----------------------------------------------------------------
+PLOT:    13_limitations.png
+
+Four limitations our robustness checks did not fully resolve.
+One: only Perth Airport is a clean case. We cannot claim
+Costco always disciplines prices everywhere. Two: the 5 km
+ring is a researcher choice, and results shift at 3 km and
+8 km. Three: we identify the effect, not the mechanism.
+Whether competitors respond via price-matching, volume
+advantages, or consumer perception, our data cannot tell.
+Four: the QLD and NSW Costcos need more post-opening months
+before they can be read cleanly. Thank you.
+
+
+================================================================
+TIME BUDGET (sec, rounded)
+================================================================
+ 1  title              10        Speaker 1
+ 2  why matters        30        Speaker 1
+ 3  question           25        Speaker 1
+ 4  preview            25        Speaker 1   -> 90 sec
+ 5  data pipeline      30        Speaker 2
+ 6  all stations       25        Speaker 2
+ 7  sample funnel      30        Speaker 2
+ 8  identification     40        Speaker 2   -> 125 sec
+ 9  headline figure    50        Speaker 3
+10  generalize         45        Speaker 3   -> 95 sec
+11  robustness         35        Speaker 4
+12  recommendation     35        Speaker 4
+13  limitations        25        Speaker 4   -> 95 sec
+                       ---
+TOTAL                  405 sec   ( ~6:45 )
+
+Slack budget: ~25 sec for natural breaths, transitions, and
+cinematography flourishes. Hard target: 7:10.
 
 
 ================================================================

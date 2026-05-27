@@ -1,0 +1,494 @@
+================================================================
+COSTCO AUSTRALIA  ·  SHREW REVIEW FILM FESTIVAL
+Presentation blueprint (the WHY behind every slide)
+================================================================
+This document is the design rationale and delivery guidance for
+each slide. The spoken words live in script.txt. Use this file
+when deciding what a slide is FOR and how to deliver it; use
+script.txt when reading the actual lines.
+
+Target runtime: ~7:00 of content (~25 sec slack)
+Required structure per assignment PDF §3.1 – §3.9
+Plan-of-attack PDF: deliverables/plan_of_attack_combined.pdf
+
+What we are optimizing for (per assignment §5):
+  - Narrative arc: problem  ->  finding  ->  recommendation
+  - Main finding front and center, not buried
+  - Every minute earned (no filler, no throat-clearing)
+  - Selective: a few great figures, not every chart we made
+  - Every figure walked through (axes, pattern, meaning)
+  - Recommendation grounded in data + back-of-envelope
+  - Every group member has a speaking role
+  - Polished visuals (no raw output, no pie charts)
+  - Honest about weak results (no overselling)
+
+Visuals legend:
+  [BUILT]   PNG already in presentation/plots/
+  [TODO]    still needs to be built
+  [TEXT]    no chart, just typography / iconography on the slide
+
+
+================================================================
+SLIDE 1  ·  Title / cold open                           ~10 sec
+================================================================
+TEACHES:  Who we are, what the project is, and who we are
+          advising. The hook is the question itself, not a
+          team-name roll call.
+
+VISUAL:   [TEXT] Project title ("Does Costco discipline
+          Australian fuel prices?"), subtitle "Advising the
+          Australian Competition and Consumer Commission", and
+          a small AU silhouette with a fuel-pump icon to make
+          the topic instantly legible.
+
+NOTES:    Open on the QUESTION, not the names. The PDF
+          (§3.1) wants "sharp and pointed." Save the team
+          intros for one line. Hand off briskly.
+
+SPEAKER:  Speaker 1
+
+
+================================================================
+SLIDE 2  ·  Why this matters                            ~30 sec
+================================================================
+TEACHES:  Three things in one slide:
+            1. The ACCC is Australia's competition regulator.
+            2. The AU fuel-retail market is concentrated
+               (74% of volume in 9 brands).
+            3. Big-box entry is one of the cleanest natural
+               experiments for testing whether new entrants
+               discipline incumbent prices.
+
+VISUAL:   [BUILT] 02_market_concentration.png
+          Three horizontal bars (Major / Other large /
+          Smaller independents) showing the ACCC's category
+          aggregates from its Nov 2025 report. Costco is
+          highlighted in blue inside the smaller-independents
+          bar. Callout under the bars carries the takeaway.
+
+NOTES:    Stylized facts only, not analysis. Keep the slide
+          uncluttered. End with the bridge: "...which raises
+          a sharp empirical question:" so the handoff to
+          slide 3 feels inevitable.
+
+SPEAKER:  Speaker 1
+
+
+================================================================
+SLIDE 3  ·  The question                                ~25 sec
+================================================================
+TEACHES:  The precise causal question and the unit of
+          analysis. Does Costco entry into an AU local market
+          (a 5 km ring) cause nearby competitor stations to
+          lower their prices?
+
+VISUAL:   [BUILT] 03_market_unit.png
+          Conceptual schematic: a single Costco dot in the
+          middle, ~10 competitor stations inside a coral 5 km
+          ring, faint gray "outside the market" dots beyond.
+          Answers "what is the unit of analysis?" without
+          restating the question.
+
+NOTES:    Read the question once, slowly. Make the point that
+          "competitor stations" is the dependent variable; we
+          are NOT measuring whether Costco itself is cheap
+          (it is, by design). We are measuring whether its
+          arrival forces everyone else nearby to drop prices.
+
+SPEAKER:  Speaker 1
+
+
+================================================================
+SLIDE 4  ·  Preview of findings                         ~25 sec
+================================================================
+TEACHES:  Bottom-line up front: one clean negative case
+          (Perth Airport, ~3 c/L), three inconclusive cases,
+          and a recommendation to lower entry barriers.
+
+VISUAL:   [BUILT] 04_bluf_preview.png
+          Hero composition: dominant "−3.4 ¢/L" stat on the
+          left as the visual anchor; supporting "3 of 4
+          inconclusive" and "Recommendation" blocks stacked
+          on the right, separated by a thin vertical rule.
+          No chart — typography only (the figure reveal lives
+          on slides 9 and 10).
+
+NOTES:    This is the BLUF the assignment PDF explicitly
+          requires (§3.2). Frame it as "Here is where we end
+          up; the next 5 minutes are how we got there."
+          Resist the temptation to caveat. There is plenty of
+          room for nuance on slides 10, 11, and 13.
+
+SPEAKER:  Speaker 1
+
+
+================================================================
+SLIDE 5  ·  The data                                    ~30 sec
+================================================================
+TEACHES:  Source, time window, scope/scale, and the variables
+          we actually use. Per PDF §3.3.A: be CONCRETE.
+          Exact counts, exact dates, named categories.
+
+VISUAL:   [BUILT] 05_data_pipeline.png
+          Four-stage horizontal flow:
+            STATE FUEL REGISTRIES  (3 source boxes with date
+                                    ranges)
+              ->  CLEAN & AGGREGATE  (6,084 stations × ~96 mo)
+              ->  KEY VARIABLES      (6 raw fields + constructed
+                                      mean_price_cents)
+              ->  ESTIMATE           (per-Costco SC fits)
+
+VARIABLES Just the ones we actually use:
+USED:       station_id, postcode, lat, lng, date,
+            unleaded_price
+          Constructed:
+            mean_price_cents = mean of all unleaded_price
+                               observations for a given
+                               station-month
+
+NOTES:    Walk LEFT to RIGHT through the diagram. Hit the
+          three sources by name once and the constructed
+          variable once. Do not read dates off the slide;
+          they are there for reference.
+
+SPEAKER:  Speaker 2
+
+
+================================================================
+SLIDE 6  ·  What the data looks like                    ~25 sec
+================================================================
+TEACHES:  Geographic footprint of the universe we are
+          sampling from. Stations cluster along the populated
+          eastern and southwestern coasts; coverage exists
+          everywhere there is a fuel market worth studying.
+
+VISUAL:   [BUILT] 06_all_stations.png
+          AU map with all 6,084 stations as small dots, state
+          outlines, WA/QLD/NSW labels, and per-state counts
+          (NSW 3,281 / QLD 1,882 / WA 921) at the bottom.
+
+NOTES:    One sentence on what is visible: "Every dot is one
+          fuel station." Then point to the coastal clustering
+          and the empty interior so the audience understands
+          why the donor pool is concentrated near population.
+
+SPEAKER:  Speaker 2
+
+
+================================================================
+SLIDE 7  ·  Sample construction                         ~30 sec
+================================================================
+TEACHES:  How we went from the full universe to the analysis
+          sample. Two filters per side:
+            Costcos:  10 candidates -> 4 with enough pre AND
+                      post coverage.
+            Postcodes: 1,004 -> 196 donors (>20 km from any
+                      Costco, ≥3 stations/month average).
+
+VISUAL:   [BUILT] 07_sample_funnel.png
+          Two side-by-side funnels (Treated Costcos on left,
+          Donor postcodes on right). Bar widths proportional
+          to counts; final layers in saturated color (deep
+          blue for treated, moss green for donors). Filter
+          reasons sit between layers with arrows.
+
+NOTES:    Do NOT walk through every filter from the qmd. Hit
+          the two big ones per side. The audience should come
+          away thinking "principled, not arbitrary." Six
+          excluded Costcos (Marsden Park, Auburn, Canberra
+          Airport, Casula, North Lakes, Ipswich) are too
+          recent or too old. Name them only if asked.
+
+SPEAKER:  Speaker 2
+
+
+================================================================
+SLIDE 8  ·  Identification strategy                     ~40 sec
+================================================================
+TEACHES:  Synthetic control in plain English. For each
+          treated Costco, we build a fake "Perth Airport that
+          never got a Costco" as a weighted blend of WA donor
+          postcodes whose pre-Costco trajectory matches Perth
+          Airport's. After Costco opens, the gap is the
+          causal effect, under the assumption that nothing
+          else changed differently between the treated ring
+          and its synthetic.
+
+VISUAL:   [BUILT] 08_costcos_rings_donors.png
+          AU map showing the 4 treated Costcos (blue dots),
+          the 20 km exclusion ring (dashed gray) around each,
+          and the 196 donor postcodes (green). Inset zooms
+          into Coomera so the 5 km treated ring (coral) is
+          legible.
+
+NOTES:    Allude to the method ("synthetic control") in one
+          breath; do NOT explain the optimization. The PDF
+          (§6 deductions) explicitly warns against drowning
+          in technical details. The map IS the explanation.
+
+SPEAKER:  Speaker 2
+
+
+================================================================
+SLIDE 9  ·  Headline result  (this is our Figure 1)     ~50 sec
+================================================================
+TEACHES:  The single picture that, if a viewer remembered
+          nothing else, would convey our main finding (per
+          PDF §3.6: "Lead with your Figure 1"). Before Feb
+          2020, synthetic and actual track each other; after
+          Costco opens, actual drops ~3.4 c/L and stays
+          there. The three other Costcos do not show clean
+          separations.
+
+VISUAL:   [BUILT] 09_costco_trajectories.png
+          Four-panel grid:
+            Top (large):  Perth Airport (WA), with full
+                          annotations: "Costco opens Feb 2020"
+                          marker, mean-gap callout, legend.
+            Bottom row:   Lake Macquarie (NSW)  ·  Casuarina
+                          (WA)  ·  Coomera (QLD), in
+                          chronological treatment order.
+          Common 2018 – 2026 x-range so the "Costco opens"
+          markers slide rightward through the small panels.
+
+NOTES:    Walk the audience through the AXES BEFORE the
+          finding, then point at the pre-period tracking,
+          then the treatment line, then the divergence. This
+          is the longest single slide; earn it by slowing
+          down. Use the bottom row to acknowledge the honest
+          "only Perth Airport is clean" story BEFORE slide 10
+          drives it home.
+
+SPEAKER:  Speaker 3
+
+
+================================================================
+SLIDE 10  ·  Does it generalize?                        ~45 sec
+================================================================
+TEACHES:  Honest read across all 4 treated Costcos: only
+          Perth Airport produces a clean negative effect with
+          a CI that excludes zero. Casuarina is borderline
+          (degenerate-narrow CI artifact). Coomera is
+          inconclusive. Lake Macquarie is wrong-signed, but
+          that traces to a 5 km geometry artifact (RC7).
+
+VISUAL:   [BUILT] 10_forest_plot.png
+          Forest plot with one row per Costco: point estimate
+          as a colored dot, 95% CI as a horizontal bar, zero
+          line marked vertically. Dots colored by sign-of-
+          effect class.
+
+NOTES:    Resist any temptation to spin. The PDF (§6) and
+          the plan-of-attack both penalize overselling weak
+          results. The honest "1 of 4 clean" framing makes
+          the Perth Airport effect MORE credible, not less,
+          because we are not cherry-picking.
+
+SPEAKER:  Speaker 3
+
+
+================================================================
+SLIDE 11  ·  Did we just get lucky?                     ~35 sec
+================================================================
+TEACHES:  Headline robustness check (placebo-in-time) shown
+          in full plus a quick name-check of the other six.
+          Honest read: the Perth Airport placebo at Feb 2019
+          shows a gap of -1.96 c/L with CI excluding zero,
+          meaning some pre-existing WA price drift. But the
+          real post-Costco gap (-3.4) is meaningfully larger,
+          so the Costco-incremental effect is ~-1.4 c/L.
+          Still real, just smaller than the headline.
+
+VISUAL:   [BUILT] 11_placebo_robustness.png
+          Top panel: placebo trajectory for Perth Airport
+          (Jan 2018 – Feb 2020), with vertical lines at the
+          placebo date (solid dotted) and real date (faint).
+          Bottom-right callout stacks three numbers in
+          monospace: placebo gap + CI, real gap, Costco-
+          incremental.
+          Bottom strip: a 3-row Q/A table. Each row is a
+          concern someone might raise (italic, left) paired
+          with the check we ran and its finding (green check
+          + RC label + plain text, right). Per PDF §3.7 we
+          show only the most important / most intuitive
+          checks (RC4 drop COVID, RC2 alt radii, RC7 spatial
+          placebo); the strip header acknowledges "we ran
+          seven total" and points to the analysis document
+          for the rest (RC3, RC5, RC6).
+
+NOTES:    The point of this slide is NOT the methodology, it
+          is the CREDIBILITY STATEMENT: "We tried to break
+          our own finding seven different ways; here is the
+          most intuitive one, and the rest are in our
+          analysis document." Be honest about the placebo
+          imperfection. The qmd at line 1837 acknowledges
+          the same caveat. Honesty here protects against the
+          overselling deduction.
+
+SPEAKER:  Speaker 4
+
+
+================================================================
+SLIDE 12  ·  Recommendation + back-of-envelope          ~35 sec
+================================================================
+TEACHES:  Concrete action for the ACCC plus a back-of-
+          envelope on the consumer impact.
+
+          Two recommendations:
+            1. Use advocacy + merger-review powers to lower
+               zoning and lease barriers that delay big-box
+               fuel entry.
+            2. Treat the Costco price-discipline effect as
+               a substantive consideration in any future
+               fuel-retail merger review.
+
+          Back-of-envelope (from qmd §5.3, Scenario A):
+            assume 100,000 residents per 5 km ring
+            assume 900 L/person/year petrol consumption (ABS)
+            assume 70% of ring volume goes to non-Costco
+                   competitors (1 Costco vs ~20 incumbents)
+            =>  ~63 ML/year competitor fuel per ring
+          Costco-specific effect: ~1.4 ¢/L
+            =>  ~A$0.9 million in savings per ring per year
+            =>  ~A$3.6 million across the 4 current rings
+            =>  ~A$9 million at 10 rings if barriers fall
+
+VISUAL:   [BUILT] 12_recommendation.png
+          Magazine-style two-column layout, thin vertical rule
+          between halves. Left: kicker "RECOMMENDATIONS FOR
+          THE ACCC", then two numbered recommendations with
+          bold headlines and supporting prose. Right: kicker
+          "BACK-OF-ENVELOPE IMPACT", per-ring math chain
+          (63 ML × 1.4 ¢/L = A$0.9 M as three stat blocks
+          with × and = operators), a horizontal rule, the
+          scale-up rationale, and a dominant green hero
+          "≈ A$9 M / year" with "aggregate annual consumer
+          savings" subtitle.
+
+NOTES:    Be SPECIFIC. Vague recommendations get marked down
+          (PDF §6). Read the math out loud; it lands harder
+          when the audience sees the arithmetic assemble in
+          front of them. Anchor on Scenario A (Costco-
+          specific 1.4 c/L), not Scenario B (the 4-Costco
+          mean, dragged toward zero by Lake Macquarie and
+          Coomera). Naming the assumptions out loud also
+          inoculates against "where did you get that?"
+
+SPEAKER:  Speaker 4
+
+
+================================================================
+SLIDE 13  ·  Limitations                                ~25 sec
+================================================================
+TEACHES:  The four biggest threats to our conclusion that
+          our robustness checks did not fully resolve:
+            1. Only one truly clean case (Perth Airport).
+               Generalizing to "Costco always disciplines"
+               is overreach.
+            2. The 5 km ring is a researcher choice; results
+               at 3 km and 8 km differ.
+            3. We identify the EFFECT, not the MECHANISM.
+               Price-matching? Volume discounts? Perception?
+               Our data cannot tell.
+            4. QLD and NSW Costcos need more post-treatment
+               months before a clean read is possible.
+
+VISUAL:   [BUILT] 13_limitations.png
+          Four stacked rows separated by thin horizontal
+          rules. Each row has a numbered colored badge on the
+          left (orange / blue / purple / gray), a kicker label
+          naming the kind of concern (GENERALIZABILITY /
+          GEOMETRY / MECHANISM / DATA WINDOW), a bold
+          headline, and a one-line body. Color-coded so the
+          audience can scan the four concern-types visually.
+
+NOTES:    Do not dwell — 25 seconds tops. The honest framing
+          here protects against the overselling deduction.
+          Close with "thank you" and a clean handoff to Q&A
+          (if any) or end-card.
+
+SPEAKER:  Speaker 4
+
+
+================================================================
+TIME BUDGET RECAP
+================================================================
+Slide  1  (title)                10 sec    Speaker 1
+Slide  2  (why matters)          30 sec    Speaker 1
+Slide  3  (question)             25 sec    Speaker 1
+Slide  4  (preview)              25 sec    Speaker 1   -> 90 sec
+Slide  5  (data pipeline)        30 sec    Speaker 2
+Slide  6  (all-stations)         25 sec    Speaker 2
+Slide  7  (sample funnel)        30 sec    Speaker 2
+Slide  8  (identification)       40 sec    Speaker 2   -> 125 sec
+Slide  9  (headline figure)      50 sec    Speaker 3
+Slide 10  (generalize)           45 sec    Speaker 3   -> 95 sec
+Slide 11  (robustness)           35 sec    Speaker 4
+Slide 12  (recommendation)       35 sec    Speaker 4
+Slide 13  (limitations)          25 sec    Speaker 4   -> 95 sec
+                                 ------
+TOTAL                            405 sec   (~6:45)
+Slack                             25 sec   (transitions, breaths)
+================================================================
+HARD TARGET                      ~7:10
+
+
+================================================================
+SPEAKING ROLE HANDOFFS
+================================================================
+4-person group (current plan):
+  Speaker 1   slides  1 – 4     setup + preview
+  Speaker 2   slides  5 – 8     data + sample + method
+  Speaker 3   slides  9 – 10    headline result + spread
+  Speaker 4   slides 11 – 13    robustness + ask + limits
+
+Per assignment PDF §4: roles need not be exactly equal, but
+everyone must clearly participate. The slight imbalance on
+Speaker 2 (125 vs ~95 elsewhere) is intentional: the
+data + method block is the most coherent chunk and reads
+better delivered by one voice.
+
+3-person fallback:  combine A+B (1-7) and D (11-13).
+5-person stretch:   split C into 8-9 (one person) and 10
+                    (another).
+
+
+================================================================
+WHAT WE STILL NEED TO BUILD
+================================================================
+1. Slide 1 visual:   title slide (group names, course/date,
+                     small AU + fuel-pump icon). Built
+                     directly in the deck, not as a PNG.
+
+All other slides (2 – 13) have rendered PNGs ready in
+presentation/plots/.
+
+
+================================================================
+ASSIGNMENT-PDF CROSSWALK
+================================================================
+PDF §3.1  Question and why it matters     ->  slides 1, 2, 3
+PDF §3.2  Preview of key findings         ->  slide 4
+PDF §3.3.A  Introduce the data            ->  slide 5
+PDF §3.3.B  Show what the data looks like ->  slide 6
+PDF §3.4  Sample construction             ->  slide 7
+PDF §3.5  Identification strategy         ->  slide 8
+PDF §3.6  Results (Figure 1 first)        ->  slides 9, 10
+PDF §3.7  Robustness checks               ->  slide 11
+PDF §3.8  Recap + recommendation + BotE   ->  slide 12
+PDF §3.9  Limitations                     ->  slide 13
+
+
+================================================================
+DELIVERABLES CHECKLIST  (per assignment PDF §8)
+================================================================
+[ ] Video file (MP4 or MOV)
+[ ] Slide deck (PDF or PowerPoint)
+[ ] Quarto analysis (.qmd + rendered PDF) — already exists at
+    analysis/costco_australia_sc.{qmd,pdf}; reads inputs from
+    the Dropbox folder hardcoded in the setup chunk.
+
+REMINDER: the .qmd already pulls inputs via Dropbox direct-
+download URLs (the ?dl=1 trick), so the assignment's
+reproducibility requirement is satisfied. Confirm by knitting
+on a clean machine before submission.

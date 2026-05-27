@@ -68,9 +68,9 @@ real_gap  = float(effects.loc["Perth Airport", "mean_post_gap_cents"])
 costco_incremental = real_gap - mean_placebo_gap
 
 # ---- Figure layout ---------------------------------------------------
-fig = plt.figure(figsize=(13, 7.5))
-ax_main  = fig.add_axes([0.07, 0.30, 0.88, 0.65])
-ax_strip = fig.add_axes([0.03, 0.04, 0.94, 0.18])
+fig = plt.figure(figsize=(13, 8.0))
+ax_main  = fig.add_axes([0.07, 0.36, 0.88, 0.60])
+ax_strip = fig.add_axes([0.03, 0.03, 0.94, 0.28])
 ax_strip.set_xlim(0, 1)
 ax_strip.set_ylim(0, 1)
 ax_strip.axis("off")
@@ -144,53 +144,87 @@ ax_main.xaxis.set_major_formatter(mdates.DateFormatter("%b\n%Y"))
 ax_main.legend(loc="upper left", frameon=False, fontsize=10.5,
                bbox_to_anchor=(0.0, 0.97))
 
-# ---- Bottom strip: 6 other robustness checks (passed) ---------------
+# ---- Bottom strip: three most intuitive supplementary checks --------
+# Q/A layout, one row per check. Per assignment PDF §3.7: show the
+# MOST IMPORTANT checks, do not let this section drag, lead with the
+# checks that most strengthen credibility. We picked the three that
+# address distinct concerns and read fastest at slide pace.
 checks = [
-    ("RC2", "Alt radii\n3 km / 15 km, 8 km / 30 km"),
-    ("RC3", "Alt Casuarina geometry\n10 km treated ring"),
-    ("RC4", "Drop COVID window\nMar–Dec 2020 excluded"),
-    ("RC5", "12-month holdout\non Perth Airport pre-period"),
-    ("RC6", "Donor-permutation CIs\n(powers the band above)"),
-    ("RC7", "Spatial placebo\non the 5–20 km donut"),
+    {
+        "rc":      "RC4",
+        "concern": "“Isn’t this just a COVID artifact?”",
+        "finding": "Dropped Mar–Dec 2020 from both panels; "
+                   "the gap barely moved.",
+    },
+    {
+        "rc":      "RC2",
+        "concern": "“Did you get lucky with the 5 km choice?”",
+        "finding": "Re-ran at 3 km and 8 km treated rings; "
+                   "sign and magnitude survive.",
+    },
+    {
+        "rc":      "RC7",
+        "concern": "“Maybe Costco affects far-away stations too, "
+                   "contaminating the donors?”",
+        "finding": "Tested stations 5–20 km out; "
+                   "no comparable price drop.",
+    },
 ]
 
-# Strip title
+# Strip header
 ax_strip.text(
-    0.5, 0.95, "Six other robustness checks (all support the headline):",
-    ha="center", va="top",
-    fontsize=11.5, fontweight="bold", color=COL_TEXT,
+    0.04, 0.95,
+    "Three more checks worth highlighting "
+    "(we ran seven total; details in the analysis):",
+    ha="left", va="top",
+    fontsize=12, fontweight="bold", color=COL_TEXT,
 )
 
+# Row geometry: three evenly spaced rows below the header
 n = len(checks)
-card_w = 0.14
-card_h = 0.75
-margin = (1 - n * card_w) / (n + 1)
-card_y = 0.04
+top_y    = 0.74
+bot_y    = 0.18
+row_step = (top_y - bot_y) / (n - 1) if n > 1 else 0
+row_ys   = [top_y - i * row_step for i in range(n)]
 
-for i, (rc, label) in enumerate(checks):
-    x = margin + i * (card_w + margin)
-    # Mini card
-    bg = FancyBboxPatch(
-        (x, card_y), card_w, card_h,
-        boxstyle="round,pad=0.005,rounding_size=0.015",
-        facecolor=COL_CARD_BG,
-        edgecolor=COL_PASS, linewidth=1.4,
-    )
-    ax_strip.add_patch(bg)
+# Column anchors
+X_CONCERN = 0.04   # left edge of italic question
+X_CHECK   = 0.42   # checkmark glyph
+X_RC      = 0.455  # RC label
+X_FIND    = 0.505  # finding text
 
-    # RC label + check (mathtext checkmark for font compatibility)
+# Faint vertical separator between concern column and answer column
+ax_strip.plot(
+    [0.39, 0.39], [bot_y - 0.05, top_y + 0.05],
+    color="#E0E0E0", lw=0.8,
+)
+
+for y, check in zip(row_ys, checks):
+    # Concern (italic gray, the question someone might ask)
     ax_strip.text(
-        x + card_w / 2, card_y + card_h - 0.10,
-        rf"$\checkmark$  {rc}",
-        ha="center", va="top",
-        fontsize=12, fontweight="bold", color=COL_PASS,
+        X_CONCERN, y, check["concern"],
+        ha="left", va="center",
+        fontsize=10.8, color=COL_ANNOT, style="italic",
     )
-    # Description
+    # Green check
     ax_strip.text(
-        x + card_w / 2, card_y + card_h - 0.34, label,
-        ha="center", va="top",
-        fontsize=9.0, color=COL_ANNOT,
+        X_CHECK, y, r"$\checkmark$",
+        ha="left", va="center",
+        fontsize=13, fontweight="bold", color=COL_PASS,
     )
+    # RC label (green, bold)
+    ax_strip.text(
+        X_RC, y, check["rc"],
+        ha="left", va="center",
+        fontsize=11.5, fontweight="bold", color=COL_PASS,
+    )
+    # Finding (dark, normal weight)
+    ax_strip.text(
+        X_FIND, y, check["finding"],
+        ha="left", va="center",
+        fontsize=10.8, color=COL_TEXT,
+    )
+
 
 plt.savefig(OUT / "11_placebo_robustness.png", dpi=150,
             bbox_inches="tight", facecolor="white")

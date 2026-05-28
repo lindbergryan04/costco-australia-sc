@@ -68,12 +68,27 @@ real_gap  = float(effects.loc["Perth Airport", "mean_post_gap_cents"])
 costco_incremental = real_gap - mean_placebo_gap
 
 # ---- Figure layout ---------------------------------------------------
-fig = plt.figure(figsize=(13, 8.0))
-ax_main  = fig.add_axes([0.07, 0.36, 0.88, 0.60])
-ax_strip = fig.add_axes([0.03, 0.03, 0.94, 0.28])
+fig = plt.figure(figsize=(13, 8.4))
+ax_main  = fig.add_axes([0.07, 0.36, 0.88, 0.55])
+ax_strip = fig.add_axes([0.03, 0.03, 0.94, 0.27])
 ax_strip.set_xlim(0, 1)
 ax_strip.set_ylim(0, 1)
 ax_strip.axis("off")
+
+# Plot title — names the specific robustness check on display
+fig.text(
+    0.07, 0.955,
+    "Robustness Check 1:  Placebo in time",
+    ha="left", va="top",
+    fontsize=15, fontweight="bold", color=COL_TEXT,
+)
+fig.text(
+    0.07, 0.925,
+    "Refit the synthetic for Perth Airport pretending Costco arrived 12 months early. "
+    "Does a fake \"effect\" appear at the fake date?",
+    ha="left", va="top",
+    fontsize=10.5, color=COL_ANNOT, style="italic",
+)
 
 # ---- Main panel: placebo trajectory ---------------------------------
 ax_main.fill_between(
@@ -187,17 +202,13 @@ bot_y    = 0.18
 row_step = (top_y - bot_y) / (n - 1) if n > 1 else 0
 row_ys   = [top_y - i * row_step for i in range(n)]
 
-# Column anchors
+# Column anchors. No vertical rule separator — the colored RC chip
+# already visually divides the concern column from the answer column,
+# and a rule was clipping the long concern in row 3.
 X_CONCERN = 0.04   # left edge of italic question
-X_CHECK   = 0.42   # checkmark glyph
-X_RC      = 0.455  # RC label
-X_FIND    = 0.505  # finding text
-
-# Faint vertical separator between concern column and answer column
-ax_strip.plot(
-    [0.39, 0.39], [bot_y - 0.05, top_y + 0.05],
-    color="#E0E0E0", lw=0.8,
-)
+X_CHECK   = 0.45   # checkmark glyph
+X_RC      = 0.485  # RC label
+X_FIND    = 0.535  # finding text
 
 for y, check in zip(row_ys, checks):
     # Concern (italic gray, the question someone might ask)

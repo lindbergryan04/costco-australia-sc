@@ -113,11 +113,3 @@ These CSVs are the analysis-ready outputs of
 scripts requires the 2.2 GB raw archive linked from the main repo's
 `README.md`; that step is upstream of the `.qmd` and not exercised on a
 clean-machine knit.
-
-## §4 robustness checks
-
-Every §4 fit goes through `fit_one_costco_robust()` in `_sc_helpers.R`,
-which tries `predictors = "yearly_means"` first and falls back to
-`"overall_mean"` when the QP solver returns a singular matrix. Returns
-`NULL` if both strategies fail; the table chunks check for `NULL` and
-emit `NA` / `(fit failed)` rather than crashing.
